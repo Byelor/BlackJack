@@ -1,17 +1,27 @@
 {
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/hbs": "^4.0.5",
     "@types/node": "^25.6.0",
+    "@types/pg": "^8.20.0",
+    "nodemon": "^3.1.14",
+    "sass": "^1.99.0",
     "ts": "^0.2.2",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
   },
   "dependencies": {
-    "nodemon": "^3.1.14"
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-hbs": "^2.5.0",
+    "hbs": "^4.2.1",
+    "pg": "^8.20.0"
   },
   "name": "blackjack",
   "version": "1.0.0",
   "type": "module",
-  "scripts":{
-    "start": "nodemon app.ts"
+  "scripts": {
+      "start": "npx nodemon --env-file=.env --exec tsx src/index.ts"
   }
-  
 }

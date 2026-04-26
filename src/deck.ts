@@ -5,12 +5,12 @@ class Card {
 
     constructor(suit: string, rank: string, value: number) {
         this.suit = suit;
-        this.rank = rank; // Добавлено
+        this.rank = rank;
         this.value = value;
     }
 }
 
-class Deck {
+export class Deck {
     cards: Array<Card> = [];
 
     constructor(count: number = 1) {
