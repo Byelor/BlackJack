@@ -1,0 +1,18 @@
+    <main>
+        <textarea id="user-nickname"></textarea>
+        <form id="text-form">
+        <input type="text" placeholder="your message" id="user-input">
+        <button id="send-ws" type="submit" method="none">
+            send
+        </button>
+        <p id="answer"></p>
+        </form>
+    </main>
+
+    {{#contentFor "scripts"}}
+        {{> (lookup @root "scripts")}}
+    {{/contentFor}}
+
+    {{#contentFor "styles"}}
+        <link rel="stylesheet" href="/css/styles.css">
+    {{/contentFor}}

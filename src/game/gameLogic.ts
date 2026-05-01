@@ -1,4 +1,4 @@
-import { Deck, Card } from "./deck.js";
+import { Deck, Card } from "../deck.js";
 
 // ─── Интерфейс для всех, кто держит карты ────────────────────────────────────
 
