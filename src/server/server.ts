@@ -11,7 +11,7 @@ import myEmitter from "./router.js";
 
 
 wss.on("connection",(ws, req)=>{
-    console.log("new connection");
+    console.log("new ws connection");
     ws.on("message", (message)=>{
         const {event, obj} = JSON.parse(message.toString());
         myEmitter.emit(event, obj, ws);

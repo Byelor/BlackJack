@@ -4,12 +4,14 @@ const myEmitter = new EventEmitter();
 
 myEmitter.on("bet", Controller.bet);
 
-myEmitter.on("hit", Controller.hit);
+// myEmitter.on("hit", Controller.hit);
 
-myEmitter.on("stand", Controller.stand);
+// myEmitter.on("stand", Controller.stand);
 
-myEmitter.on("doubleDown", Controller.doubleDown);
+// myEmitter.on("doubleDown", Controller.doubleDown);
 
-myEmitter.on("split", Controller.split);
+// myEmitter.on("split", Controller.split);
+
+
 
 export default myEmitter;
