@@ -7,10 +7,16 @@ const server = http.createServer(app);
 
 const wss = new WebSocketServer({server});
 
+import myEmitter from "./router.js";
+
 
 wss.on("connection",(ws, req)=>{
     console.log("new connection");
-    
+    ws.on("message", (message)=>{
+        const {event, obj} = JSON.parse(message.toString());
+        myEmitter.emit(event, obj, ws);
+
+    });
 });
 
 export {server, wss};
