@@ -1,4 +1,4 @@
-import type User from "./User.js";
+import type User from "../game/User.js";
 
 export class UserRepository{
     base: Map<string, User> = new Map();

@@ -1,5 +1,5 @@
 import Service from "./service.js";
-import type {betArgs} from "./eventArgs.js";
+import type {betArgs} from "../game/eventArgs.js";
 class Controller{
     bet = async (obj: betArgs, ws: any)=>{
         console.log(obj);

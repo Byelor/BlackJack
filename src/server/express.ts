@@ -6,6 +6,10 @@ import RoomRouter from "./room.view.router.js";
 import Repository from "./userSessions.js";
 
 
+import ViewsRouter from "../express/routes/views.router.js";
+
+
+import cp from "cookie-parser";
 const app = express();
 
 const __dirname = import.meta.dirname;
@@ -16,22 +20,9 @@ app.set('views', path.join(__dirname, "../../views"));
 
 
 
-
-
-app.use("/setCookie", (req,res, next)=>{
-    res.setHeader("set-cookie", "sessionToken=QWERTY; expires=Thu, 31 Dec 2027 6:00:00 IST; path=/");
-    Repository.add("QWERTY", {"userId": 4, "balance": 5000, "email": "zaqw1234bmbmbm@gmail.com", "name": "vkpvpk"});
-    next();
-})
-
-
-app.use("/", (req, res, next)=>{
-    console.log(req.headers["cookie"]);
-    next();
-});
-
+app.use(cp());
 app.use("/room", RoomRouter);
-
+app.use("/main", ViewsRouter);
 app.get("/", (req, res)=>{
     res.render("index", {layout: "layout", scripts: "scripts"});
 })
