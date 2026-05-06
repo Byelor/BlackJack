@@ -11,7 +11,8 @@ class UserRedisRepository{
             "name": obj["name"] as string,
             "email": obj["email"] as string,
             "balance": Number(obj["balance"]),
-            "userId": Number(obj["user_id"])
+            "userId": Number(obj["user_id"]),
+            "hpassword": obj["hpassword"] as string
         }
         return session;
     }

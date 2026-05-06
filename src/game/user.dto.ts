@@ -3,4 +3,5 @@ export default interface User{
     email: string;
     userId: number;
     balance: number;
+    hpassword: string;
 }
