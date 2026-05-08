@@ -5,7 +5,7 @@ import ViewsRouter from "../express/routes/views.router.js";
 import cp from "cookie-parser";
 
 import AuthorizationMiddleware from "../express/middlewares/authentification.js";
-
+import authorizationRouter from "../express/routes/authorization.router.js";
 
 
 //configuration
@@ -25,8 +25,9 @@ app.use(cp());
 app.use(AuthorizationMiddleware.checkUserByCookie);
 
 
-
 //routes
+app.use("/authorization", authorizationRouter);
+
 app.use("/main", ViewsRouter);
 app.get("/", (req, res)=>{
     console.log(req.user);
