@@ -1,11 +1,10 @@
 import express from "express";
 import hbs from "express-hbs";
 import path from "path";
-import RoomRouter from "./room.view.router.js";
 import ViewsRouter from "../express/routes/views.router.js";
 import cp from "cookie-parser";
 
-
+import AuthorizationMiddleware from "../express/middlewares/authentification.js";
 
 
 
@@ -23,14 +22,15 @@ app.set('views', path.join(__dirname, "../../views"));
 //middlware
 app.use(cp());
 
+app.use(AuthorizationMiddleware.checkUserByCookie);
 
 
 
 //routes
-app.use("/room", RoomRouter);
 app.use("/main", ViewsRouter);
 app.get("/", (req, res)=>{
-    res.render("index", {layout: "layout", scripts: "scripts"});
+    console.log(req.user);
+    res.render("index", {layout: "layout", scripts: "scripts", user: req.user});
 })
 
 export default app;

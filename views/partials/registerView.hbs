@@ -1,0 +1,16 @@
+
+<h1>hello, this is register menu</h1>
+<form id="login-form">
+    <label for="nickname-input">nickname/email:</label>
+    <input type="text" name="nickname" id="nickname-input">
+
+    <label for="password-input"></label>
+    <input type="password" id="password-input" name="password">
+
+</form>
+
+{{#contentFor "scripts"}}
+    {{> (lookup @root "scripts")}}
+{{/contentFor}}
+
+
