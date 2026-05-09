@@ -1,0 +1,22 @@
+    <main>
+        {{#with user}}
+        <h1>{{userId}} {{name}}</h1>
+        <h1>{{email}}</h1>
+        <h1>{{hpassword}}</h1>
+        <h1>{{balance}}</h1>
+        {{/with}}
+        <form method="POST" action="/" id="form">
+            <input name="name" type="text"/>
+            <input name="password" type="password"/>
+            <input type="submit" value="submit">
+
+        </form>
+    </main>
+
+    {{#contentFor "scripts"}}
+        {{> (lookup @root "scripts")}}
+    {{/contentFor}}
+
+    {{#contentFor "styles"}}
+        <link rel="stylesheet" href="/css/styles.css">
+    {{/contentFor}}

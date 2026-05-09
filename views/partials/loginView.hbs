@@ -1,0 +1,16 @@
+<h1>hello, this is login menu</h1>
+
+<form id="login-form" method="POST" action="/api/login">
+    <label for="nickname-input">nickname/email:</label>
+    <input type="text" name="nickname" id="nickname-input">
+
+    <label for="password-input"></label>
+    <input type="password" id="password-input" name="password">
+    <button type="submit">Submit</button>
+</form>
+<p id="login-status"></p>
+{{#contentFor "scripts"}}
+    {{> (lookup @root "scripts")}}
+{{/contentFor}}
+
+
