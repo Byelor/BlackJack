@@ -1,11 +1,11 @@
 import express from "express";
 import hbs from "express-hbs";
 import path from "path";
-import ViewsRouter from "../express/routes/views.router.js";
+import ViewsRouter from "../express/routes/main.view.router.js";
 import cp from "cookie-parser";
 
 import AuthorizationMiddleware from "../express/middlewares/authentification.js";
-import authorizationRouter from "../express/routes/authorization.router.js";
+import authorizationRouter from "../express/routes/authorization.view.router.js";
 
 
 //configuration

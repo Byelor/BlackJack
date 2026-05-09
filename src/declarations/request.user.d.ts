@@ -1,4 +1,4 @@
-import type User from "../game/user.dto.ts";
+import type User from "../express/models/user.dto.ts";
 declare global{
     namespace Express{
         interface Request{

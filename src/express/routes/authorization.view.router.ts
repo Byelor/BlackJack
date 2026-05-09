@@ -1,7 +1,7 @@
 import { Router } from "express";
-import AuthorizationViewController from "../controllers/authorization.view.controller.js";
+import AuthorizationViewController from "../views/controllers/authorization.view.controller.js";
  
-class AuthorizationRouter{
+class AuthorizationViewRouter{
     router: Router = Router();
 
     constructor()
@@ -12,4 +12,4 @@ class AuthorizationRouter{
         this.router.get("/login", AuthorizationViewController.renderLoginPage);
     }
 }
-export default new AuthorizationRouter().router;
+export default new AuthorizationViewRouter().router;

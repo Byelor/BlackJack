@@ -1,5 +1,5 @@
 import type {Request, Response, NextFunction} from "express";
-import UserService from "../services/user.service.js";
+import UserService from "../../services/user.service.js";
 
 class MainViewController{
     renderPage = async (req: Request, res: Response, next: NextFunction)=>{

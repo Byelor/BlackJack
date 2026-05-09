@@ -1,5 +1,5 @@
 import pool from "../../database/database.js";
-import type User from "../../game/user.dto.js";
+import type User from "../models/user.dto.js";
 
 class UserPGRepository{
     getUserById = async (userId: number)=>{

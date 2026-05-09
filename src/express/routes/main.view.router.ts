@@ -1,8 +1,8 @@
 import {Router} from "express";
-import MainViewController from "../controllers/main.view.controller.js";
+import MainViewController from "../views/controllers/main.view.controller.js";
 
 
-class ViewsRouter{
+class MainViewRouter{
     router: Router = Router();
     constructor()
     {
@@ -12,4 +12,4 @@ class ViewsRouter{
         this.router.get("", MainViewController.renderPage);
     }
 }
-export default new ViewsRouter().router;
+export default new MainViewRouter().router;
