@@ -33,15 +33,19 @@ class UserSessionRedisRepository{
         await RedisClient.expire(sessionToken, expirationDate);
         return sessionToken;
     }
+
+
     deleteSessionByUserId = async(userId: number)=>{
         const session = await this.getSessionByUserId(userId);
         if(!session)
         {
             return null;
         }
-        const userSession = `${PREFIXES.userSession} + ${userId}`;
-        await RedisClient.del([userSession, userSession]);
+        const userSession = `${PREFIXES.userSession}${userId}`;
+        await RedisClient.del([session, userSession]);
     }
+
+
     getSessionByUserId = async(userId: number)=>{
         const userSession = `${PREFIXES.userSession}${userId}`;
         return await RedisClient.get(userSession);
