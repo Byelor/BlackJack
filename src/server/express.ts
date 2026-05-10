@@ -4,9 +4,9 @@ import path from "path";
 import ViewsRouter from "../express/routes/main.view.router.js";
 import cp from "cookie-parser";
 
-import AuthorizationMiddleware from "../express/middlewares/authentification.js";
-import authorizationRouter from "../express/routes/authorization.view.router.js";
-
+import AuthorizationMiddleware from "../express/middlewares/authentification.middleware.js";
+import authorizationViewRouter from "../express/routes/authorization.view.router.js";
+import authorizationApiRouter from "../express/api/routers/authorization.api.router.js";
 
 //configuration
 const app = express();
@@ -24,14 +24,14 @@ app.use(cp());
 
 app.use(AuthorizationMiddleware.checkUserByCookie);
 
-
-//routes
-app.use("/authorization", authorizationRouter);
+app.use("/authorization", authorizationViewRouter);
 
 app.use("/main", ViewsRouter);
-app.get("/", (req, res)=>{
-    console.log(req.user);
-    res.render("index", {layout: "layout", scripts: "scripts", user: req.user});
-})
+
+app.use(express.json());
+
+app.use("/api/authorization", authorizationApiRouter);
+//routes
+
 
 export default app;

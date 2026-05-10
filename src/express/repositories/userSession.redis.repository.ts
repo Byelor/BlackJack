@@ -3,7 +3,7 @@ import type UserSession from "../models/userSession.dto.js";
 
 const PREFIXES = {
         session: "sess:",
-        userSession: "user_session"
+        userSession: "user_session:"
     };
 class UserSessionRedisRepository{
 
@@ -22,9 +22,9 @@ class UserSessionRedisRepository{
         }
         return session;
     }
-    //добавить транзакцию
+    //добавить транзакцию в будующем
     setSession = async (session: UserSession, generatedToken: string, expirationDate: number) : Promise<string>=>{
-
+        await this.deleteSessionByUserId(session.userId);
         const sessionToken = `sess:${generatedToken}`;
         //создание новой сессии 
         const sessionTokenHSetResult = await RedisClient.hSet(sessionToken, session as any); // user as any для уточнения, что объект просто и без вложенностей
@@ -41,13 +41,16 @@ class UserSessionRedisRepository{
         {
             return null;
         }
+        console.log(session);
         const userSession = `${PREFIXES.userSession}${userId}`;
         await RedisClient.del([session, userSession]);
     }
 
 
     getSessionByUserId = async(userId: number)=>{
+        console.log(userId);
         const userSession = `${PREFIXES.userSession}${userId}`;
+        console.log(userSession);
         return await RedisClient.get(userSession);
     }
 }
