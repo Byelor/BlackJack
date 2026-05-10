@@ -12,8 +12,8 @@ class UserSessionService{
         const fullSessionToken = await userSessionRedisRepository.setSession(userSession, generatedToken, 43200);
         return fullSessionToken;
     }
-    getSessionByToken = async (sessionToken: string)=>{
-        return await userSessionRedisRepository.getSessionByToken(sessionToken);
+    getUserSessionByToken = async (sessionToken: string)=>{
+        return await userSessionRedisRepository.getUserSessionByToken(sessionToken);
     }
 
 }

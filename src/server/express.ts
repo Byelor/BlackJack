@@ -18,6 +18,15 @@ app.set('views', path.join(__dirname, "../../views"));
 
 
 
+// тестовый вариант с перенаправлением пользователя при успешном входе или регистрации
+app.get('/sometest', (req, res)=>{
+    const sessionToken = req.query["sessionToken"];
+    res.cookie("sessionToken", sessionToken, {
+        expires: new Date("2030")
+    })
+    res.redirect("/authorization/login");
+    
+});
 
 //middlware
 app.use(cp());

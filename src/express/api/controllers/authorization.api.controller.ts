@@ -27,8 +27,7 @@ class AuthorizationApiController{
             res.status(500).json({"message": "проблема с бдшкой, поменять статус код в коде"});
             return;
         }
-        res.setHeader("set-Cookie", session);
-        res.status(202).json({"message": "all good"});
+        res.status(202).json({"message": "all good", "session": session});
     }
     register = async (req: Request, res: Response, next: NextFunction)=>{
         

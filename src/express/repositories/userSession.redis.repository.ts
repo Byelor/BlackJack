@@ -1,6 +1,8 @@
 import RedisClient from "../../database/redis.js";
 import type UserSession from "../models/userSession.dto.js";
 
+//sessionToken = sess: + generatedShit
+
 const PREFIXES = {
         session: "sess:",
         userSession: "user_session:"
@@ -8,7 +10,7 @@ const PREFIXES = {
 class UserSessionRedisRepository{
 
     
-    getSessionByToken = async (sessionToken: string) =>{
+    getUserSessionByToken = async (sessionToken: string) =>{
         const obj = await RedisClient.hGetAll(sessionToken);
         if(!obj["user_id"])
         {

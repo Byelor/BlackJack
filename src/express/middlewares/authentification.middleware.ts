@@ -5,7 +5,11 @@ import UserSessionService from "../services/userSession.service.js";
 class AuthorizationMiddleware{
     checkUserByCookie = async (req: Request, res: Response, next: NextFunction)=>{
         const sessionToken = req.cookies["sessionToken"];
-        const userSession = await UserSessionService.getSessionByToken(sessionToken);
+        if(!sessionToken)
+        {
+            return next();
+        }
+        const userSession = await UserSessionService.getUserSessionByToken(sessionToken);
         if(!userSession)
         {
             return next();
