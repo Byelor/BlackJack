@@ -10,6 +10,7 @@ class AuthorizationViewRouter{
     }
     initialRoutes(){
         this.router.get("/login", AuthorizationViewController.renderLoginPage);
+        this.router.get("/register", AuthorizationViewController.renderRegistrationPage);
     }
 }
 export default new AuthorizationViewRouter().router;
