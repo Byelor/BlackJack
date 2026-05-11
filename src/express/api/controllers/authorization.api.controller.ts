@@ -27,7 +27,7 @@ class AuthorizationApiController{
             res.status(500).json({"message": "проблема с бдшкой, поменять статус код в коде"});
             return;
         }
-        res.status(202).json({"message": "all good", "session": session});
+        res.status(202).json({"message": "all good", "sessionToken": session});
     }
     register = async (req: Request, res: Response, next: NextFunction)=>{
         

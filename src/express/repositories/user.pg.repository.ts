@@ -9,7 +9,6 @@ class UserPGRepository{
     }
     setUser = async (user: User)=>{
         const answer = await pool.query(`INSERT INTO users(email, name, hpassword, balance) VALUES($1,$2,$3,$4)`,[user.email, user.name, user.hpassword, user.balance]);
-        console.log(answer);
     }
     getUserByEmail = async (email: string)=>{
         const data = await pool.query(`SELECT user_id as "userId", email, name, hpassword, balance FROM users WHERE email=$1;`, [email]);

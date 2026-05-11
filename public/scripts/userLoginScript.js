@@ -16,12 +16,15 @@ loginForm.addEventListener("submit", (event)=>{
         },
         body: JSON.stringify(loginData)
     }).then(response=>{
-        console.log(response);
+
         return response.json()}
     ).then(data=>{
         console.log(data);
+        if(data["message"] === "all good"){
+            window.location.href=`/setcookie?sessionToken=${data["sessionToken"]}`;
+            return;
+        }
         loginStatus.textContent = data["message"];
-        console.log(response);
     }).catch(error=>{console.log(error)});
 
 })
