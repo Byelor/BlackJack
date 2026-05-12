@@ -8,7 +8,8 @@ class UserPGRepository{
         return rows.length > 0 ? (rows[0] as User) : null;
     }
     setUser = async (user: User)=>{
-        const answer = await pool.query(`INSERT INTO users(email, name, hpassword, balance) VALUES($1,$2,$3,$4)`,[user.email, user.name, user.hpassword, user.balance]);
+        const answer = await pool.query(`INSERT INTO users(email, name, hpassword, balance) VALUES($1,$2,$3,$4) RETURNING user_id`,[user.email, user.name, user.hpassword, user.balance]);
+        return Number(answer.rows[0]["user_id"]);
     }
     getUserByEmail = async (email: string)=>{
         const data = await pool.query(`SELECT user_id as "userId", email, name, hpassword, balance FROM users WHERE email=$1;`, [email]);
@@ -25,5 +26,10 @@ class UserPGRepository{
         const rows = data.rows;
         return rows.length > 0 ? (rows[0] as User) : null;
     }
+    isUserCreated = async (identifier: string)=>{
+            const data = await pool.query(`SELECT user_id as "userId", email, name, hpassword, balance FROM users WHERE name=$1 OR email=$1 LIMIT 1;`, [identifier]);
+            
+            return data.rows.length > 0 ? true : false;
+        }
 }
 export default new UserPGRepository();

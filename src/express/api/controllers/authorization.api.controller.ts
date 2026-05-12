@@ -1,5 +1,4 @@
 import type { Request, Response, NextFunction } from "express";
-import UserService from "../../services/user.service.js";
 import userSessionService from "../../services/userSession.service.js";
 import userService from "../../services/user.service.js";
 class AuthorizationApiController{
@@ -30,7 +29,33 @@ class AuthorizationApiController{
         res.status(202).json({"message": "all good", "sessionToken": session});
     }
     register = async (req: Request, res: Response, next: NextFunction)=>{
+
+        if(!req.body)
+        {
+            res.json({"message": "Empty req.body"});
+            return;
+        }
+        const {name, email, password} = req.body;
+        if(!name || !password || !password){
+            res.status(400).json({"message": "Empty values for name, email or password!"});
+            return;
+        }
+        const userSession = await userService.addUser(name, email, password);
         
+        if(!userSession)
+        {
+            res.status(400).json({"message": "Пользователь с такими данными уже существует!"});
+            return;
+        }
+        
+        const session = await userSessionService.setSession(userSession);
+        if(!session)
+        {
+            res.status(500).json({"message": "проблема с бдшкой, поменять статус код в коде"});
+            return;
+        }
+        res.status(202).json({"message": "all good", "sessionToken": session});
+    
     }
 
 }

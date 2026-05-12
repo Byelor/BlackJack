@@ -1,0 +1,44 @@
+*, ::after, ::before{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+#header{
+    a{
+        text-decoration: none;
+    }
+    *{
+        border: 1px solid black;
+    }
+
+
+    width: 100vw;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 50px;
+    #logo-wrapper{
+        #logo{
+            font-size: 4rem;
+        }
+    }
+    #header-navigation-panel{
+        display: flex;
+
+        #header-navigation-list{
+
+            display: flex;
+
+            li{
+
+                display: flex;
+                .navigation-button{
+
+                    text-decoration: none;
+                    color: black;
+                    padding: 10px;
+                }
+            }
+        }
+    }
+}

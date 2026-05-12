@@ -32,15 +32,9 @@ class UserService{
         const {hpassword, ...userSession} = user;
         return userSession as UserSession;
     }
+    
     addUser = async (name: string, email: string, password: string)=>{
-        const userFromName = await userPgRepository.getUserByName(name);
-        if(userFromName)
-        {
-            return null;
-        }
-
-        const userFromEmail = await userPgRepository.getUserByEmail(email);
-        if(userFromEmail)
+        if(await userPgRepository.isUserCreated(name) || await userPgRepository.isUserCreated(email))
         {
             return null;
         }
@@ -51,8 +45,8 @@ class UserService{
             name: name,
             userId: UNKNOWN_USER_ID
         }
-        const creationResult = await userPgRepository.setUser(user);
-        //додумать здесь немного, насчет возвращаемого значения
+        const userId = await userPgRepository.setUser(user);
+        return {balance: user.balance, email: user.email, name: user.name, userId: userId};
     }
 }
 
