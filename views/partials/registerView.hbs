@@ -1,6 +1,6 @@
 <h1>hello, this is register menu</h1>
 
-<form id="login-form" method="POST" action="/api/register">
+<form id="register-form" method="POST" action="/api/register">
     <label for="nickname-input">nickname:</label>
     <input type="text" name="nickname" id="nickname-input">
 
@@ -14,7 +14,7 @@
     <input type="password" id="password-repeat-input" name="password-repeat">
     <button type="submit">submit</button>
 </form>
-
+<p id="form-status"></p>
 {{#contentFor "scripts"}}
     {{> (lookup @root "scripts")}}
 {{/contentFor}}

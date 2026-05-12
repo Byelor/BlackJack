@@ -8,6 +8,7 @@ class AuthorizationApiRouter{
     }
     initialRoutes(){
         this.router.post("/login", AuthorizationApiController.login);
+        this.router.post("/register", AuthorizationApiController.register);
     }
 }
 export default new AuthorizationApiRouter().router;

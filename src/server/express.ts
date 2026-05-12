@@ -30,6 +30,7 @@ app.use(AuthorizationMiddleware.checkUserByCookie);
 
 app.use("/authorization", authorizationViewRouter);
 
+
 app.use("/main", MainViewRouter);
 
 app.use(express.json());
@@ -37,5 +38,7 @@ app.use(express.json());
 app.use("/api/authorization", authorizationApiRouter);
 //routes
 
-
+app.use("/", (req, res)=>{
+    res.redirect("/main");
+})  
 export default app;
