@@ -11,6 +11,9 @@ import authorizationApiRouter from "../express/api/routers/authorization.api.rou
 import setCookie from "../express/support/setCookie.support.js";
 
 
+import HandlebarsHelpers from "../../handlebars_helpers/registerHelpers.js";
+
+
 //configuration
 const app = express();
 const __dirname = import.meta.dirname;
@@ -18,6 +21,7 @@ app.use(express.static(path.join(__dirname, "../../public")));
 app.engine('hbs', hbs.express4({partialsDir: path.join(__dirname, "../../views/partials"), layoutsDir: path.join(__dirname, "../../views/layouts")}));
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, "../../views"));
+HandlebarsHelpers(hbs);
 
 
 

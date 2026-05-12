@@ -4,10 +4,15 @@
             Chorniy Yaugen
         </a>
     </div>
+    
     <nav id="header-navigation-panel">
         <ul id="header-navigation-list">
+            {{#isAuth user}}
+            <li>sfds</li>
+            {{else}}
             <li><a class="navigation-button" href="/authorization/login">login</a></li>
             <li><a class="navigation-button" href="/authorization/register">register</a></li>
+            {{/isAuth}}
         </ul>
     </nav>
 </header>
