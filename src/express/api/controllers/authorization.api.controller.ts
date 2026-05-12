@@ -59,7 +59,19 @@ class AuthorizationApiController{
     }
 
     logout = async (req: Request, res: Response, next: NextFunction)=>{
-        
+        const sessionToken = req.cookies["sessionToken"];
+        if(!sessionToken)
+        {  
+            res.status(400).json({"message": "Клиент без сессии!"});
+            return;
+        }
+        const removeResult = userSessionService.removeSessionByToken(sessionToken);
+        if(!removeResult)
+        {
+            res.status(400).json({"message": "Клиент без сессии!"});
+            return;
+        }
+        res.status(200).json({...removeResult,  message: "all good"});
     }
 
 }

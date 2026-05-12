@@ -61,6 +61,7 @@ class UserSessionRedisRepository{
         }
         const userSession = `${PREFIXES.userSession}${userId}`;
         await RedisClient.del([userSession, sessionToken]);
+        return {code: 200};
     }
 
     getSessionByUserId = async(userId: number)=>{

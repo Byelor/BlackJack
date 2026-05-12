@@ -18,6 +18,7 @@ class UserSessionService{
 
     removeSessionByToken = async (sessionToken: string)=>{
         return await userSessionRedisRepository.deleteSessionBySessionToken(sessionToken);
+        
     }
 }
 

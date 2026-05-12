@@ -5,7 +5,7 @@ class AuthorizationViewController{
         res.render("authorization", {"layout": "layout", "scripts": "loginScripts", "partial": "loginView", "user": req.userSession});
     }
     renderRegistrationPage = async (req: Request, res: Response, next: NextFunction)=>{
-        res.render("authorization", {"layout": "layout", "scripts": "registerScripts", "partial": "registerView"} )
+        res.render("authorization", {"layout": "layout", "scripts": "registerScripts", "partial": "registerView", "user": req.userSession} )
     }
 
 
