@@ -55,7 +55,11 @@ class AuthorizationApiController{
             return;
         }
         res.status(202).json({"message": "all good", "sessionToken": session});
-    
+        
+    }
+
+    logout = async (req: Request, res: Response, next: NextFunction)=>{
+        
     }
 
 }

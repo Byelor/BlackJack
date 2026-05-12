@@ -30,8 +30,8 @@ class UserSessionRedisRepository{
         const sessionToken = `${PREFIXES.session}${generatedToken}`;
         //создание новой сессии 
         const sessionTokenHSetResult = await RedisClient.hSet(sessionToken, session as any); // user as any для уточнения, что объект просто и без вложенностей
-        const userId = `${PREFIXES.userSession}${session.userId}`;
-        const userIdSetResult = await RedisClient.set(userId, sessionToken, {EX: expirationDate});
+        const userSession = `${PREFIXES.userSession}${session.userId}`;
+        const userIdSetResult = await RedisClient.set(userSession, sessionToken, {EX: expirationDate});
         await RedisClient.expire(sessionToken, expirationDate);
         return sessionToken;
     }
@@ -47,6 +47,21 @@ class UserSessionRedisRepository{
         await RedisClient.del([session, userSession]);
     }
 
+    deleteSessionBySessionToken = async (sessionToken: string)=>{
+        
+        if(!sessionToken)
+        {
+            return null;
+        }
+
+        const userId = await RedisClient.hGet(sessionToken , "userId");
+        if(!userId)
+        {
+            return null;
+        }
+        const userSession = `${PREFIXES.userSession}${userId}`;
+        await RedisClient.del([userSession, sessionToken]);
+    }
 
     getSessionByUserId = async(userId: number)=>{
         const userSession = `${PREFIXES.userSession}${userId}`;
