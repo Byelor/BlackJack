@@ -24,7 +24,6 @@ app.set('views', path.join(__dirname, "../../views"));
 HandlebarsHelpers(hbs);
 
 
-
 app.get('/setcookie', setCookie);
 
 //middlware

@@ -8,7 +8,7 @@
     <nav id="header-navigation-panel">
         <ul id="header-navigation-list">
             {{#isAuth user}}
-            <li>sfds</li>
+            <li><a id="logout" class="navigation-button">logout</a></li>
             {{else}}
             <li><a class="navigation-button" href="/authorization/login">login</a></li>
             <li><a class="navigation-button" href="/authorization/register">register</a></li>
@@ -16,3 +16,8 @@
         </ul>
     </nav>
 </header>
+{{#isAuth user}}
+    {{#contentFor "scripts"}}
+        <script src="/scripts/logout.js"></script>
+    {{/contentFor}}
+{{/isAuth}}
