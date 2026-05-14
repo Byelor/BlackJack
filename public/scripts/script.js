@@ -1,8 +1,3 @@
 const socket = new WebSocket(`ws://${window.location.host}`);
 
-const form = document.getElementById("form");
-
-form.addEventListener("submit", (event)=>{
-    event.preventDefault();
-    window.location.href="/";
-})
+socket.send({method: "BET", amount: "200", roomId: "4"});

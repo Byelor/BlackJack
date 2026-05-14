@@ -7,8 +7,8 @@ class WSAPIRouter{
         this.initialRoutes();
     }   
     initialRoutes(){
-        this.eventEmitter.on("BET", )
+        this.eventEmitter.on("BET", WSController.bet);
     } 
 }
 
-export default new WSAPIRouter().initialRoutes;
+export default new WSAPIRouter().eventEmitter;

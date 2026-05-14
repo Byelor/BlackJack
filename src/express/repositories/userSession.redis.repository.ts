@@ -5,7 +5,7 @@ import type UserSession from "../models/userSession.dto.js";
 
 const PREFIXES = {
         session: "sess-",
-        userSession: "user_session-"
+        userSession: "user_sess-", // - хранит соответствие user_sess-userId : sess-dshgudshdgifsd
     };
 class UserSessionRedisRepository{
 
@@ -25,14 +25,14 @@ class UserSessionRedisRepository{
         return session;
     }
     //добавить транзакцию в будующем
-    setSession = async (session: UserSession, generatedToken: string, expirationDate: number) : Promise<string>=>{
+    setSession = async (session: UserSession, generatedToken: string, expirationTime: number) : Promise<string>=>{
         await this.deleteSessionByUserId(session.userId);
         const sessionToken = `${PREFIXES.session}${generatedToken}`;
         //создание новой сессии 
         const sessionTokenHSetResult = await RedisClient.hSet(sessionToken, session as any); // user as any для уточнения, что объект просто и без вложенностей
         const userSession = `${PREFIXES.userSession}${session.userId}`;
-        const userIdSetResult = await RedisClient.set(userSession, sessionToken, {EX: expirationDate});
-        await RedisClient.expire(sessionToken, expirationDate);
+        const userIdSetResult = await RedisClient.set(userSession, sessionToken, {EX: expirationTime});
+        await RedisClient.expire(sessionToken, expirationTime);
         return sessionToken;
     }
 
@@ -67,6 +67,17 @@ class UserSessionRedisRepository{
     getSessionByUserId = async(userId: number)=>{
         const userSession = `${PREFIXES.userSession}${userId}`;
         return await RedisClient.get(userSession);
+    }
+
+    refreshSessionByToken = async(sessionToken: string, expirationTime: number)=>{
+        const userSession = await this.getUserSessionByToken(sessionToken);
+        if(!userSession)
+        {
+            return null;
+        }
+        await RedisClient.expire(sessionToken, expirationTime);
+        await RedisClient.expire(`${PREFIXES.userSession}${userSession.userId}`, expirationTime);
+        return userSession;
     }
 }
 
