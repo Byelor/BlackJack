@@ -1,12 +1,14 @@
 import express from "express";
 import hbs from "express-hbs";
 import path from "path";
-import MainViewRouter from "../express/routes/main.view.router.js";
 import cp from "cookie-parser";
 
-import AuthorizationMiddleware from "../express/middlewares/authentification.middleware.js";
-import authorizationViewRouter from "../express/routes/authorization.view.router.js";
+import authorizationViewRouter from "../express/views/routes/authorization.view.router.js";
 import authorizationApiRouter from "../express/api/routers/authorization.api.router.js";
+import MainViewRouter from "../express/views/routes/main.view.router.js";
+
+import AuthorizationMiddleware from "../express/middlewares/authentification.middleware.js";
+import refreshCookieMiddleware from "../express/middlewares/refreshCookie.middleware.js";
 
 import setCookie from "../express/support/setCookie.support.js";
 
@@ -30,6 +32,8 @@ app.get('/setcookie', setCookie);
 app.use(cp());
 
 app.use(AuthorizationMiddleware.checkUserByCookie);
+app.use(refreshCookieMiddleware.refreshSession);
+
 
 app.use("/authorization", authorizationViewRouter);
 

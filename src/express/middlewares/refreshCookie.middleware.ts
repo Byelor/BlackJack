@@ -8,11 +8,18 @@ class RefreshSessionMiddleware{
         {
             return next();
         }
-            res.cookie("sessionToken", sessionToken, {
-                maxAge: EXPIRATION_TIME.cookie,
-                path: "/",
-                httpOnly: true
-            });
+
+        const userSession = await UserSessionService.refreshSessionByToken(sessionToken);
+        if(!userSession)
+        {
+            res.clearCookie("sessionToken", {path: "/"});
+            return next();
+        }
+        res.cookie("sessionToken", sessionToken, {
+            maxAge: EXPIRATION_TIME.cookie,
+            path: "/",
+            httpOnly: true
+        });
 
         return next();
     }
