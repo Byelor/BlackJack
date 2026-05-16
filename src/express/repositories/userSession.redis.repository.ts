@@ -4,14 +4,14 @@ import type UserSession from "../models/userSession.dto.js";
 //sessionTokenKey = sess: + sessionToken
 
 const PREFIXES = {
-        session: "user:sess:",
-        userSession: "user:id:sess:", // - хранит соответствие user_sess-userId : sess-dshgudshdgifsd
+        userSession: (userId: any)=>{return `user:id:sess:${userId}`;},
+        session: (sessionToken: any)=>{return `user:sess:${sessionToken}`;}
     };
 class UserSessionRedisRepository{
 
     
     getUserSessionByToken = async (sessionToken: string) =>{
-        const sessionTokenKey = `${PREFIXES.session}${sessionToken}`;
+        const sessionTokenKey = PREFIXES.session(sessionToken);
         const obj = await RedisClient.hGetAll(sessionTokenKey);
         if(!obj["userId"])
         {
@@ -28,11 +28,11 @@ class UserSessionRedisRepository{
     //добавить транзакцию в будующем
     setSession = async (session: UserSession, generatedToken: string, expirationTime: number) : Promise<string>=>{
         await this.deleteSessionByUserId(session.userId);
-        const sessionTokenKey = `${PREFIXES.session}${generatedToken}`;
+        const sessionTokenKey = PREFIXES.session(generatedToken);
         //создание новой сессии 
         await RedisClient.hSet(sessionTokenKey, session as any); // user as any для уточнения, что объект просто и без вложенностей
         await RedisClient.expire(sessionTokenKey, expirationTime);
-        const userSessionKey = `${PREFIXES.userSession}${session.userId}`;
+        const userSessionKey = PREFIXES.userSession(session.userId);
         await RedisClient.set(userSessionKey, generatedToken, {EX: expirationTime});
         return generatedToken;
     }
@@ -44,8 +44,8 @@ class UserSessionRedisRepository{
         {
             return null;
         }
-        const userSessionKey = `${PREFIXES.userSession}${userId}`;
-        const sessionTokenKey = `${PREFIXES.session}${session}`
+        const userSessionKey = PREFIXES.userSession(userId);
+        const sessionTokenKey = PREFIXES.session(session);
         await RedisClient.del([userSessionKey, sessionTokenKey]);
         return session;
     }
@@ -56,19 +56,19 @@ class UserSessionRedisRepository{
         {
             return null;
         }
-        const sessionTokenKey = `${PREFIXES.session}${sessionToken}`
+        const sessionTokenKey = PREFIXES.session(sessionToken);
         const userId = await RedisClient.hGet(sessionTokenKey , "userId");
         if(!userId)
         {
             return null;
         }
-        const userSessionKey = `${PREFIXES.userSession}${userId}`;
+        const userSessionKey = PREFIXES.userSession(userId);
         await RedisClient.del([userSessionKey, sessionTokenKey]);
         return sessionToken;
     }
 
     getSessionByUserId = async(userId: number)=>{
-        const userSessionKey = `${PREFIXES.userSession}${userId}`;
+        const userSessionKey = PREFIXES.userSession(userId);
         return await RedisClient.get(userSessionKey);
     }
 
@@ -77,14 +77,14 @@ class UserSessionRedisRepository{
         {
             return null;
         }
-        const sessionTokenKey = `${PREFIXES.session}${sessionToken}`;
+        const sessionTokenKey = PREFIXES.session(sessionToken);
         const userSession = await this.getUserSessionByToken(sessionToken);
         if(!userSession)
         {
             return null;
         }
         await RedisClient.expire(sessionTokenKey, expirationTime);
-        const userSessionKey = `${PREFIXES.userSession}${userSession.userId}`;
+        const userSessionKey = PREFIXES.userSession(userSession.userId);
         await RedisClient.expire(userSessionKey, expirationTime);
         return sessionToken;
     }
