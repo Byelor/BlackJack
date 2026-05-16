@@ -31,6 +31,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "npx nodemon --env-file=.env --exec tsx src/index.ts"
+    "start": "npx nodemon --env-file=.env --exec tsx src/index.ts",
+    "test": "npx nodemon --exec tsx src/test.ts"
   }
 }

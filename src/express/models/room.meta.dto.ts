@@ -4,6 +4,6 @@ export interface RoomMeta{
     description: string,
     maxPlayersCount: number,
     currentPlayersCount: number,
-    is_private: boolean,
+    isPrivate: boolean,
     password: string,
 };
