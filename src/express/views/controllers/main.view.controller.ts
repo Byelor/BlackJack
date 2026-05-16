@@ -9,7 +9,7 @@ class MainViewController{
             layout: "layout",
             "user": req.userSession,
         }, (err, html)=>{
-            console.log(err);
+            console.log("error:", err);
             res.send(html);
             
         });

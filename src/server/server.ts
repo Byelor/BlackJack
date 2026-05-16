@@ -1,7 +1,6 @@
 import app from "./express.js";
 import http from "node:http";
 
-import {WebSocketServer, WebSocket as WS} from "ws";
 
 import {Server, Socket} from "socket.io";
 
@@ -11,7 +10,7 @@ const server = http.createServer(app);
 
 
 const socketio = new Server(server, {cors:{
-    origin: "*",
+    origin: ["http://127.0.0.1:8888","*"],
     methods: ["GET", "POST"]
 }});
 
@@ -24,13 +23,5 @@ socketio.on("connection", async (socket: Socket)=>{
     }
 });
 
-// wss.on("connection",(ws, req)=>{
-//     console.log("new ws connection");
-//     ws.on("message", (message)=>{
-//         const {event, obj} = JSON.parse(message.toString());
-//         wsRouter.emit(event, obj, ws);
-        
-//     });
-// });
 
 export {server, socketio};
