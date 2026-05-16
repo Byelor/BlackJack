@@ -6,6 +6,7 @@ import cp from "cookie-parser";
 import authorizationViewRouter from "../express/views/routes/authorization.view.router.js";
 import authorizationApiRouter from "../express/api/routers/authorization.api.router.js";
 import MainViewRouter from "../express/views/routes/main.view.router.js";
+import roomViewRouter from "../express/views/routes/room.view.router.js";
 
 import AuthorizationMiddleware from "../express/middlewares/authentification.middleware.js";
 import refreshCookieMiddleware from "../express/middlewares/refreshCookie.middleware.js";
@@ -34,16 +35,16 @@ app.use(cp());
 app.use(AuthorizationMiddleware.checkUserByCookie);
 app.use(refreshCookieMiddleware.refreshSession);
 
+//routes
 
 app.use("/authorization", authorizationViewRouter);
 
-
+app.use("/loby", roomViewRouter);
 app.use("/main", MainViewRouter);
 
 app.use(express.json());
 
 app.use("/api/authorization", authorizationApiRouter);
-//routes
 
 app.use("/", (req, res)=>{
     res.redirect("/main");

@@ -4,6 +4,7 @@ export enum room_status{
 }
 
 export interface Room{
+    roomId: string,
     dealer: string[],
     status: room_status,
     current_player: string,

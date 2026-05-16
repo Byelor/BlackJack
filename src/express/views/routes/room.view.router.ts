@@ -7,6 +7,7 @@ class RoomViewRouter{
         this.initialRoutes();
     }
     initialRoutes(){
-        this.router.get("", )
+        this.router.get("", RoomViewController.RenderRoomsPage);
     }
 }
+export default new RoomViewRouter().router;

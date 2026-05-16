@@ -1,7 +1,9 @@
 export interface RoomMeta{
+    roomId: string,
     name: string, 
     description: string,
-    max_players_count: number,
+    maxPlayersCount: number,
+    currentPlayersCount: number,
     is_private: boolean,
     password: string,
 };
