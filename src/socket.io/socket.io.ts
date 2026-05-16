@@ -33,16 +33,26 @@ socketio.on("connection", (socket: Socket)=>{
 
     /*
         Примерная структура Redis
-        room_users-<room_id> - хранит user_session-<user_id> - SET
+        room-<room_id>-users - хранит user_sess-<user_id> - SET
+
+        room-<room_id>-meta
+        {
+            NAME: string 
+            DESCRIPTION: string
+            MAX_PLAYERS_COUNT: number
+            is_PRIVATE: bool
+            PASSWORD: string
+
+        }
 
         room-<room_id> 
         DEALER: - массив строк - рука диллера
         STATUS: string - PLAYING, BETTING
-        players: set number - список пользователей
-        CURRENT_PLAYER: number
+        players: set string - список пользователей
+        CURRENT_PLAYER: string
         DECK: string[] - карточная колода
 
-        room-<room_id>_player-<user_id> - хранит состояние игрока с таким айди в комнате с некоторым айди HSET
+        room-<room_id>-player-<user_id> - хранит состояние игрока с таким айди в комнате с некоторым айди HSET
         имеет множество полей
         CURRENT_HAND_INDEX: 0 - по умолчанию 0, нужно для работы со сплитами
         HANDS: number - массив рук пользователей, может быть несколько из-за сплитов
