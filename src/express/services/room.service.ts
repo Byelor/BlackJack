@@ -19,7 +19,14 @@ class RoomService{
         return await roomRedisRepository.deleteRoom(roomId);
     }
     addUserToRoom = async(roomId: string, userId: number)=>{
-        const meta = roomRedisRepository.getRoomMeta(roomId);
+        const meta = await roomRedisRepository.getRoomMeta(roomId);
+        if(!meta)
+        {
+            return null;
+        }
+        if(meta.currentPlayersCount >= meta.maxPlayersCount){
+           return null; 
+        }
         
         return await roomRedisRepository.addUserToRoom(roomId, userId);
     }

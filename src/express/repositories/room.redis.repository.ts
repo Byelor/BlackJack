@@ -110,6 +110,7 @@ class RoomRedisRepository{
         return roomId;
     }
     addUserToRoom = async (roomId: string, userId: number)=>{
+        RedisClient.watch(PREFIXES.roomMeta(roomId));
         const multi = RedisClient.multi();
         const getRoom = await RedisClient.get(PREFIXES.userIdRoom(userId));
         if(getRoom)
@@ -122,7 +123,11 @@ class RoomRedisRepository{
             "hands": "[]"
         });
         multi.sAdd(PREFIXES.roomUsers(roomId), String(userId));
-        await multi.exec();
+        const result = await multi.exec();
+        if(!result)
+        {
+            return null;
+        }
         return roomId;
     }
     removeUserFromRoom = async (roomId: string, userId: number)=>{
@@ -159,7 +164,7 @@ class RoomRedisRepository{
         }
         return roomMeta;
     }
-    
+
 }
 
 /*
