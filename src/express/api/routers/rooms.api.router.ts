@@ -7,7 +7,8 @@ class RoomsApiRouter{
         this.initialRoutes();
     }
     initialRoutes(){
-
+        this.router.get("/rooms", RoomsApiController.getAllRooms);
+        this.router.put("/room/:roomId", RoomsApiController.enterRoom);
     }
 }
 export default new RoomsApiRouter().router;

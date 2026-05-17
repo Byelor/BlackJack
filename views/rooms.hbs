@@ -1,13 +1,13 @@
 <main>
-    <ul>
-        <li>
-            <div class="room-meta">
-                {{#with room-meta}}
-                {{name}}
-                {{description}}
-                {{id}}
-                {{/with}}
-            </div>
-        </li>
+    <ul id="rooms-list">
+
     </ul>
+
+
+    <button id="update">обновить</button>
+
 </main>
+
+{{#contentFor "scripts"}}
+    <script src="/scripts/lobyRoomsScript.js"></script>
+{{/contentFor}}

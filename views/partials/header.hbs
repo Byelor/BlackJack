@@ -1,6 +1,6 @@
 <header id="header">
     <div id="logo-wrapper">
-        <a id="logo" href="/">
+        <a id="logo" href="/main">
             Chorniy Yaugen
         </a>
     </div>
@@ -8,6 +8,7 @@
     <nav id="header-navigation-panel">
         <ul id="header-navigation-list">
             {{#isAuth user}}
+            <li><a class="navigation-button" href="/loby/rooms">Rooms</a></li>
             <li><a id="logout" class="navigation-button">logout</a></li>
             {{else}}
             <li><a class="navigation-button" href="/authorization/login">login</a></li>

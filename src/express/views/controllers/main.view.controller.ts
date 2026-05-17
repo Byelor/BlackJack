@@ -5,7 +5,7 @@ import UserSessionService from "../../services/userSession.service.js";
 class MainViewController{
     renderPage = async (req: Request, res: Response, next: NextFunction)=>{
         console.log(req.userSession);
-        res.render("room", {
+        res.render("main", {
             layout: "layout",
             "user": req.userSession,
         }, (err, html)=>{

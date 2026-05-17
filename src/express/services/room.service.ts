@@ -18,12 +18,19 @@ class RoomService{
 
         return await roomRedisRepository.deleteRoom(roomId);
     }
-    addUserToRoom = async(roomId: string, userId: number)=>{
+    addUserToRoom = async(roomId: string, userId: number, password: string | null = null)=>{
         const meta = await roomRedisRepository.getRoomMeta(roomId);
         if(!meta)
         {
             return null;
         }
+        if(meta.isPrivate){
+            if(!meta.password || meta.password !== password)
+            {
+                return null;
+            }
+        }
+        
         if(meta.currentPlayersCount >= meta.maxPlayersCount){
            return null; 
         }
@@ -33,6 +40,9 @@ class RoomService{
     removeUserFromRoom = async(roomId: string, userId: number)=>{
         
         return await roomRedisRepository.removeUserFromRoom(roomId, userId);
+    }
+    getRoomMeta = async(roomId: string)=>{
+        return await roomRedisRepository.getRoomMeta(roomId);
     }
 }
 

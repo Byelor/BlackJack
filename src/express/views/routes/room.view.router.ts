@@ -7,7 +7,8 @@ class RoomViewRouter{
         this.initialRoutes();
     }
     initialRoutes(){
-        this.router.get("", RoomViewController.RenderRoomsPage);
+        this.router.get("/rooms", RoomViewController.RenderRoomsPage);
+        this.router.get("/room/:roomid", RoomViewController.RenderRoomPage);
     }
 }
 export default new RoomViewRouter().router;

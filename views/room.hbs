@@ -1,8 +1,9 @@
-<h1>Hello</h1>
-<h1>{{user.name}}</h1>
-<h1>{{user.userId}}</h1>
-<h1>{{user.email}}</h1>
-<h1>{{user.balance}}</h1>
+
+<h1>Hello world</h1>
+
 {{#contentFor "scripts"}}
+    
     {{> "socket.io.scripts"}}
+
+    <script src="/scripts/roomHeaderScript.js"></script>
 {{/contentFor}}
