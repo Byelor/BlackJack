@@ -61,7 +61,7 @@ class RoomRedisRepository{
         }
         return rooms;
     }
-    generateDefaultRoom = async(roomId: string, userId: number)=>{
+    generateDefaultRoom = (roomId: string, userId: number)=>{
         const defaultRoom: Room = {
             roomId: roomId,
             dealer: [],
@@ -83,7 +83,7 @@ class RoomRedisRepository{
         });
         
         multi.sAdd(PREFIXES.roomUsers(roomId), String(userId));
-        const room: Room = await this.generateDefaultRoom(roomId, userId);
+        const room: Room = this.generateDefaultRoom(roomId, userId);
         multi.hSet(PREFIXES.roomGame(roomId), {
             "room_id": room.roomId,
             "dealer": JSON.stringify(room.dealer),
@@ -109,6 +109,57 @@ class RoomRedisRepository{
         await multi.exec();
         return roomId;
     }
+    addUserToRoom = async (roomId: string, userId: number)=>{
+        const multi = RedisClient.multi();
+        const getRoom = await RedisClient.get(PREFIXES.userIdRoom(userId));
+        if(getRoom)
+        {
+            multi.sRem(PREFIXES.roomUsers(getRoom), String(userId));
+        }
+        multi.set(PREFIXES.userIdRoom(userId), roomId);
+        multi.hSet(PREFIXES.roomUser(roomId, userId), {
+            "current_hand_index": 0,
+            "hands": "[]"
+        });
+        multi.sAdd(PREFIXES.roomUsers(roomId), String(userId));
+        await multi.exec();
+        return roomId;
+    }
+    removeUserFromRoom = async (roomId: string, userId: number)=>{
+        const currentRoom = await RedisClient.get(PREFIXES.userIdRoom(userId));
+        const multi = RedisClient.multi();
+        multi.sRem(PREFIXES.roomUsers(roomId), String(userId));
+        multi.del([PREFIXES.roomUser(roomId, userId)]);
+        if(currentRoom == roomId)
+        {
+            multi.del(PREFIXES.userIdRoom(userId));
+        }
+        await multi.exec();
+        return roomId;
+    }
+    getRoomUsers = async (roomId: string)=>{
+        return await RedisClient.sMembers(PREFIXES.roomUsers(roomId));
+    }
+    getRoomMeta = async(roomId: string)=>{
+        const multi = RedisClient.multi();
+        multi.hGetAll(PREFIXES.roomMeta(roomId));
+        multi.sCard(PREFIXES.roomUsers(roomId));
+        const raw = await multi.exec();
+        const obj = raw[0] as unknown as Record<string, string>;
+        const playersCount = raw[1];
+        const roomMeta: RoomMeta = {
+                roomId: roomId,
+                name: obj["name"] || "",
+                description: obj["description"] || "",
+                maxPlayersCount: Number(obj["max_players_count"]),
+                isPrivate: (obj["is_private"] === "true"),
+                password: obj["password"] || "",
+                currentPlayersCount: Number(playersCount),
+
+        }
+        return roomMeta;
+    }
+    
 }
 
 /*

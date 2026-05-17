@@ -26,7 +26,11 @@ socketio.on("connection", (socket: Socket)=>{
         SURRENDER
         MESSAGE
 
-    
+    roomMeta: (roomId: string)=>{return `room:meta:${roomId}`},
+    roomUser: (roomId: string, userId: number)=>{ return `room:player:${roomId}:user:${userId}`;  },
+    roomUsers: (roomId: string) => {return `room:users:${roomId}`},
+    roomGame: (roomId: string) => {return `room:game:${roomId}`},
+    userIdRoom: (userId: number)=> {return `user:id:room:${userId}`}
 
     */
 
