@@ -164,7 +164,10 @@ class RoomRedisRepository{
         }
         return roomMeta;
     }
-
+    getUserCurrentRoomId = async (userId: number)=>{
+        const currentRoom = await RedisClient.get(PREFIXES.userIdRoom(userId));
+        return currentRoom;
+    }
 }
 
 /*

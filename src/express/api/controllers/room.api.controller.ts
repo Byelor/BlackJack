@@ -49,6 +49,13 @@ class RoomsApiController{
             return;
         }
         const userId = req.userSession?.userId;
+        const roomId = await roomService.removeUserFromCurrentRoom(userId);
+        if(!roomId)
+        {
+            res.json({message: "you out from any room!"});
+            return;
+        }
+        res.json({message: "all good", roomId: roomId});
     }
 }
 export default new RoomsApiController();

@@ -44,6 +44,15 @@ class RoomService{
     getRoomMeta = async(roomId: string)=>{
         return await roomRedisRepository.getRoomMeta(roomId);
     }
+    removeUserFromCurrentRoom = async(userId: number)=>{
+        const currentRoom = await roomRedisRepository.getUserCurrentRoomId(userId);
+        if(!currentRoom)
+        {
+            return null;
+        }
+        await roomRedisRepository.removeUserFromRoom(currentRoom, userId);
+        return currentRoom;
+    }
 }
 
 export default new RoomService();

@@ -20,7 +20,11 @@ function makeRoom(roomObj)
         if(roomObj.isPrivate){
             password = prompt("enter password");
         }
-        const response = await fetch(`/api/loby/room/${roomObj.roomId}`, {
+        if(password.length === 0)
+        {
+            return;
+        }
+        const response = await fetch(`/api/lobby/room/${roomObj.roomId}`, {
             method: "PUT",
             headers:{
                 "content-type": "application/json",
@@ -42,14 +46,14 @@ function makeRoom(roomObj)
                 return;
             }
         }
-        window.location.href = `/loby/room/${roomObj.roomId}`;
+        window.location.href = `/lobby/room/${roomObj.roomId}`;
 
     });
     return roomEl;
 }
 async function showRooms()
 {
-    const response = await fetch("/api/loby/rooms", {
+    const response = await fetch("/api/lobby/rooms", {
             method: "GET",
                 headers:{
                 "content-type": "application/json",

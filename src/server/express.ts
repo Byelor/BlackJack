@@ -42,11 +42,11 @@ app.use(refreshCookieMiddleware.refreshSession);
 
 app.use("/authorization", authorizationViewRouter);
 
-app.use("/loby", checkForAuthentificationMiddleware.checkUser, roomViewRouter);   
+app.use("/lobby", checkForAuthentificationMiddleware.checkUser, roomViewRouter);   
 app.use("/main", MainViewRouter);
 
 app.use(express.json());
-app.use("/api/loby", checkForAuthAPIMiddleware.checkUser, roomsApiRouter);
+app.use("/api/lobby", checkForAuthAPIMiddleware.checkUser, roomsApiRouter);
 app.use("/api/authorization", authorizationApiRouter);
 
 // app.use("/", (req, res)=>{
