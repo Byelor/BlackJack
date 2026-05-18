@@ -1,0 +1,242 @@
+/* ─── Импорт шрифта ──────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg:          #0d1117;
+    --bg-card:     #161b22;
+    --bg-card2:    #1c2128;
+    --border:      #30363d;
+    --accent:      #58a6ff;
+    --accent-dim:  #1f3a5f;
+    --green:       #3fb950;
+    --green-dim:   #1a3a20;
+    --red:         #f85149;
+    --red-dim:     #3d1a18;
+    --yellow:      #e3b341;
+    --yellow-dim:  #3d2e0a;
+    --text:        #e6edf3;
+    --text-muted:  #8b949e;
+    --radius:      12px;
+    --shadow:      0 4px 24px rgba(0,0,0,.6);
+}
+
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+
+/* ─── Макет ─────────────────────────────────────────────────────────────────── */
+.game-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+    padding: 16px;
+    min-height: calc(100vh - 60px);
+}
+@media (max-width: 900px) {
+    .game-layout { grid-template-columns: 1fr; }
+}
+
+/* ─── Главная зона ───────────────────────────────────────────────────────────── */
+.game-main { display: flex; flex-direction: column; gap: 16px; }
+
+.deck-info {
+    display: flex; align-items: center; gap: 12px;
+    font-size: .85rem; color: var(--text-muted);
+}
+
+.area-title {
+    font-size: .75rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--text-muted); margin-bottom: 10px;
+}
+
+.dealer-area, .players-area {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.divider { height: 1px; background: var(--border); }
+
+.score-label {
+    margin-top: 10px; font-size: .9rem; color: var(--text-muted);
+}
+
+/* ─── Карты ──────────────────────────────────────────────────────────────────── */
+.cards-row { display: flex; flex-wrap: wrap; gap: 8px; min-height: 90px; align-items: center; }
+
+.card {
+    display: flex; align-items: center; justify-content: center;
+    width: 58px; height: 82px;
+    background: #fff; color: #111;
+    border-radius: 8px;
+    font-size: 1.3rem; font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0,0,0,.5);
+    transition: transform .15s;
+    user-select: none;
+}
+.card:hover { transform: translateY(-4px); }
+
+/* масти красного цвета */
+.card.red { color: #c0392b; }
+
+/* ─── Игроки ─────────────────────────────────────────────────────────────────── */
+.players-grid { display: flex; flex-direction: column; gap: 14px; }
+
+.player-slot {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    transition: border-color .2s, box-shadow .2s;
+}
+.player-slot--active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.player-name {
+    font-size: .9rem; font-weight: 600; margin-bottom: 10px;
+    display: flex; justify-content: space-between;
+}
+.player-balance { color: var(--yellow); font-size: .85rem; }
+
+.player-hands { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.hand {
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px;
+    min-width: 130px;
+    transition: border-color .2s;
+}
+.hand--active   { border-color: var(--green); }
+.hand--bust     { border-color: var(--red); background: var(--red-dim); }
+.hand--blackjack{ border-color: var(--yellow); background: var(--yellow-dim); }
+.hand--stood,
+.hand--double-hit { opacity: .7; }
+
+.hand-cards { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.hand-info { font-size: .78rem; color: var(--text-muted); }
+.hand-status { text-transform: uppercase; font-weight: 600; font-size: .7rem; }
+
+/* ─── Боковая панель ─────────────────────────────────────────────────────────── */
+.game-sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+.sidebar-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+.sidebar-title { font-size: .8rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--text-muted); margin-bottom: 12px; }
+
+.player-info { display: flex; justify-content: space-between; align-items: center; }
+.player-info__name { font-weight: 600; }
+.player-info__balance { color: var(--yellow); font-weight: 700; font-size: 1.1rem; }
+
+/* ─── Ставки ─────────────────────────────────────────────────────────────────── */
+.bet-row { display: flex; gap: 8px; margin-bottom: 10px; }
+
+.bet-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+    background: var(--bg-card2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 50%; width: 44px; height: 44px;
+    font-size: .8rem; font-weight: 600; cursor: pointer;
+    transition: background .15s, border-color .15s, transform .1s;
+}
+.chip:hover { background: var(--accent-dim); border-color: var(--accent); transform: scale(1.08); }
+
+/* ─── Кнопки действий ────────────────────────────────────────────────────────── */
+.action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 9px 16px; border-radius: 8px; border: none;
+    font-size: .88rem; font-weight: 600; cursor: pointer;
+    transition: opacity .15s, transform .1s, filter .15s;
+    font-family: inherit;
+}
+.btn:disabled { opacity: .3; cursor: not-allowed; transform: none !important; }
+.btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.1); }
+.btn:not(:disabled):active { transform: translateY(0); }
+
+.btn--primary   { background: var(--accent); color: #fff; }
+.btn--ghost     { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn--sm        { padding: 5px 10px; font-size: .78rem; }
+
+.btn--action    { grid-column: auto; }
+.btn--hit       { background: var(--green); color: #fff; }
+.btn--stand     { background: #4a5568; color: #fff; }
+.btn--double    { background: var(--yellow); color: #111; }
+.btn--split     { background: #7b5ea7; color: #fff; }
+.btn--surrender { background: var(--red); color: #fff; grid-column: 1 / -1; }
+
+/* ─── Чат ────────────────────────────────────────────────────────────────────── */
+.chat-card { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+.chat-messages {
+    flex: 1; overflow-y: auto; max-height: 220px;
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 4px 0; margin-bottom: 10px;
+}
+
+.chat-msg {
+    font-size: .82rem; line-height: 1.4; color: var(--text-muted);
+    word-break: break-word;
+}
+.chat-msg b { color: var(--text); }
+.chat-msg--mine b { color: var(--accent); }
+
+.chat-input-row { display: flex; gap: 6px; }
+.input {
+    flex: 1; background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; color: var(--text);
+    font-size: .88rem; font-family: inherit;
+    transition: border-color .15s;
+}
+.input:focus { outline: none; border-color: var(--accent); }
+
+/* ─── Модал ──────────────────────────────────────────────────────────────────── */
+.modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+}
+.modal-content {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px; min-width: 340px;
+    box-shadow: var(--shadow); animation: popIn .2s ease;
+}
+.modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; }
+
+.result-row {
+    display: grid; grid-template-columns: 1fr auto auto auto;
+    gap: 12px; align-items: center; padding: 10px;
+    border-radius: 8px; margin-bottom: 6px; font-size: .9rem;
+}
+.result-row--blackjack { background: var(--yellow-dim); }
+.result-row--win       { background: var(--green-dim); }
+.result-row--push      { background: var(--bg-card2); }
+.result-row--lose      { background: var(--red-dim); }
+
+/* ─── Уведомление ────────────────────────────────────────────────────────────── */
+.notification {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 20px;
+    font-size: .88rem; font-weight: 500;
+    z-index: 200; opacity: 0; pointer-events: none;
+    transition: opacity .2s; white-space: nowrap;
+    box-shadow: var(--shadow);
+}
+.notification--visible { opacity: 1; }
+.notification--success { border-color: var(--green); color: var(--green); }
+.notification--error   { border-color: var(--red); color: var(--red); }
+.notification--warning { border-color: var(--yellow); color: var(--yellow); }
+.notification--info    { border-color: var(--accent); color: var(--accent); }
+
+.hidden { display: none !important; }
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(.9); }
+    to   { opacity: 1; transform: scale(1); }
+}

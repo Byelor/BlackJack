@@ -6,7 +6,13 @@ class RoomViewController{
         res.render("rooms", {layout: "layout", rooms: data, user: req.userSession});
     }
     RenderRoomPage = async (req: Request, res: Response, next: NextFunction)=>{
-        res.render("room", {layout: "roomLayout", user: req.userSession});
+        const roomId = req.params["roomId"];
+        res.render("room", {
+            layout:  "roomLayout",
+            user:    req.userSession,
+            roomId,
+            userId:  req.userSession?.userId,
+        });
     }
 }
 export default new RoomViewController();

@@ -6,4 +6,5 @@ export interface RoomMeta{
     currentPlayersCount: number,
     isPrivate: boolean,
     password: string,
+    deckCount: number,        // кол-во колод (1-8), задаётся при создании комнаты
 };

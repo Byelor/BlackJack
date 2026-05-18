@@ -1,5 +1,7 @@
 const logout = document.getElementById("logout");
-logout.addEventListener("click", async (event)=>{
+if (!logout) {
+    // На страницах без кнопки logout (например, лобби) скрипт не нужен
+} else logout.addEventListener("click", async (event)=>{
     event.preventDefault();
     try{
         const response = await fetch("/api/authorization/logout", {

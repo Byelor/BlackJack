@@ -1,9 +1,107 @@
+{{#contentFor "head"}}
+<meta charset="UTF-8">
+<title>BlackJack — Комната {{roomId}}</title>
+{{/contentFor}}
 
-<h1>Hello world</h1>
+<div class="game-layout">
+
+    <!-- ─── ЛЕВАЯ КОЛОНКА: дилер + игроки ─── -->
+    <main class="game-main">
+
+        <!-- Уведомление -->
+        <div id="notification" class="notification"></div>
+
+        <!-- Информация о колоде -->
+        <div class="deck-info">
+            <span id="deck-remaining">Колода: — карт</span>
+            <button id="btn-refresh" class="btn btn--ghost btn--sm">↻ Обновить</button>
+        </div>
+
+        <!-- Дилер -->
+        <section class="dealer-area">
+            <h2 class="area-title">Дилер</h2>
+            <div id="dealer-cards" class="cards-row"></div>
+            <div id="dealer-score" class="score-label"></div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- Все игроки -->
+        <section class="players-area">
+            <h2 class="area-title">Игроки</h2>
+            <div id="players-container" class="players-grid"></div>
+        </section>
+
+    </main>
+
+    <!-- ─── ПРАВАЯ КОЛОНКА: панель управления + чат ─── -->
+    <aside class="game-sidebar">
+
+        <!-- Статус / ход -->
+        <div class="sidebar-card">
+            <div class="player-info">
+                <span class="player-info__name">{{user.name}}</span>
+                <span id="my-balance" class="player-info__balance">{{user.balance}}$</span>
+            </div>
+        </div>
+
+        <!-- Панель ставок (BETTING фаза) -->
+        <div id="betting-panel" class="sidebar-card hidden">
+            <h3 class="sidebar-title">Сделать ставку</h3>
+            <div class="bet-row">
+                <input id="bet-input" type="number" min="1" max="10000" value="50" class="input">
+                <button id="btn-bet" class="btn btn--primary">Поставить</button>
+            </div>
+            <div class="bet-chips">
+                <button class="chip" data-value="10">10</button>
+                <button class="chip" data-value="25">25</button>
+                <button class="chip" data-value="50">50</button>
+                <button class="chip" data-value="100">100</button>
+                <button class="chip" data-value="500">500</button>
+            </div>
+        </div>
+
+        <!-- Игровые кнопки (PLAYING фаза) -->
+        <div class="sidebar-card">
+            <h3 class="sidebar-title">Действия</h3>
+            <div class="action-buttons">
+                <button id="btn-hit"       class="btn btn--action btn--hit"       disabled>Взять карту</button>
+                <button id="btn-stand"     class="btn btn--action btn--stand"     disabled>Стоп</button>
+                <button id="btn-double"    class="btn btn--action btn--double"    disabled>Удвоить</button>
+                <button id="btn-split"     class="btn btn--action btn--split"     disabled>Сплит</button>
+                <button id="btn-surrender" class="btn btn--action btn--surrender" disabled>Сдаться</button>
+            </div>
+        </div>
+
+        <!-- Чат -->
+        <div class="sidebar-card chat-card">
+            <h3 class="sidebar-title">Чат</h3>
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input-row">
+                <input id="chat-input" type="text" placeholder="Сообщение..." class="input" maxlength="300">
+                <button id="btn-send-msg" class="btn btn--ghost">→</button>
+            </div>
+        </div>
+
+    </aside>
+
+</div>
+
+<!-- ─── Модал результатов ─── -->
+<div id="result-modal" class="modal" style="display:none">
+    <div class="modal-content">
+        <h2 class="modal-title">Результаты раунда</h2>
+        <div id="result-body"></div>
+        <button onclick="document.getElementById('result-modal').style.display='none'"
+                class="btn btn--primary" style="margin-top:1rem">Закрыть</button>
+    </div>
+</div>
 
 {{#contentFor "scripts"}}
-    
-    {{> "socket.io.scripts"}}
-
-    <script src="/scripts/roomHeaderScript.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Передаём userId в game.js через глобальную переменную
+        window.__MY_USER_ID__ = {{userId}};
+    </script>
+    <script src="/js/game.js"></script>
 {{/contentFor}}

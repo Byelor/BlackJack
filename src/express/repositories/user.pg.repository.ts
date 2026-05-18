@@ -27,9 +27,11 @@ class UserPGRepository{
         return rows.length > 0 ? (rows[0] as User) : null;
     }
     isUserCreated = async (identifier: string)=>{
-            const data = await pool.query(`SELECT user_id as "userId", email, name, hpassword, balance FROM users WHERE name=$1 OR email=$1 LIMIT 1;`, [identifier]);
-            
-            return data.rows.length > 0 ? true : false;
-        }
+        const data = await pool.query(`SELECT user_id as "userId", email, name, hpassword, balance FROM users WHERE name=$1 OR email=$1 LIMIT 1;`, [identifier]);
+        return data.rows.length > 0 ? true : false;
+    }
+    updateBalance = async (userId: number, newBalance: number)=>{
+        await pool.query(`UPDATE users SET balance=$1 WHERE user_id=$2;`, [newBalance, userId]);
+    }
 }
 export default new UserPGRepository();

@@ -1,13 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
     <head>
         {{{block "head"}}}
         {{{block "styles"}}}
         <link rel="stylesheet" href="/css/styles.css">
+        <link rel="stylesheet" href="/css/game.css">
     </head>
-    <body>
+    <body data-room-id="{{roomId}}" data-user-id="{{userId}}">
     {{> "header"}}
         {{{body}}}
     {{{block "scripts"}}}
+    <script src="/scripts/logout.js"></script>
+    <script src="/scripts/roomHeaderScript.js"></script>
     </body>
 </html>
