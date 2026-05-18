@@ -1,49 +1,52 @@
 <main class="lobby">
-    <section class="lobby-create">
-        <h2>Создать комнату</h2>
-        <form id="create-room-form" class="lobby-form">
-            <label>
-                Название
-                <input name="name" type="text" required maxlength="64" placeholder="Мой стол" />
-            </label>
-            <label>
-                Описание
-                <input name="description" type="text" maxlength="200" placeholder="Необязательно" />
-            </label>
-            <label>
-                Макс. игроков
-                <input name="maxPlayersCount" type="number" min="2" max="7" value="5" />
-            </label>
-            <label>
-                Колод в шузе
-                <input name="deckCount" type="number" min="1" max="8" value="6" />
-            </label>
-            <label class="lobby-checkbox">
+    <header class="lobby-header">
+        <h1 class="page-title">Лобби</h1>
+        <p class="page-subtitle">Создайте стол или присоединитесь к существующей комнате</p>
+    </header>
+
+    <section class="card lobby-create">
+        <h2 class="section-title">Создать комнату</h2>
+        <form id="create-room-form" class="lobby-form form">
+            <div class="form-group">
+                <label for="room-name">Название</label>
+                <input id="room-name" name="name" type="text" required maxlength="64" placeholder="Мой стол" class="input" />
+            </div>
+            <div class="form-group">
+                <label for="room-desc">Описание</label>
+                <input id="room-desc" name="description" type="text" maxlength="200" placeholder="Необязательно" class="input" />
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="max-players">Макс. игроков</label>
+                    <input id="max-players" name="maxPlayersCount" type="number" min="2" max="7" value="5" class="input" />
+                </div>
+                <div class="form-group">
+                    <label for="deck-count">Колод в шузе</label>
+                    <input id="deck-count" name="deckCount" type="number" min="1" max="8" value="6" class="input" />
+                </div>
+            </div>
+            <div class="form-group form-group--row">
                 <input name="isPrivate" type="checkbox" id="is-private" />
-                Приватная комната
-            </label>
-            <label id="password-field" class="lobby-password hidden">
-                Пароль
-                <input name="password" type="password" maxlength="32" autocomplete="new-password" />
-            </label>
-            <button type="submit" id="create-room-btn">Создать и войти</button>
+                <label for="is-private">Приватная комната</label>
+            </div>
+            <div id="password-field" class="form-group hidden">
+                <label for="room-password">Пароль</label>
+                <input id="room-password" name="password" type="password" maxlength="32" autocomplete="new-password" class="input" />
+            </div>
+            <button type="submit" id="create-room-btn" class="btn btn--primary btn--block">Создать и войти</button>
         </form>
         <p id="create-room-error" class="lobby-error hidden" role="alert"></p>
     </section>
 
-    <section class="lobby-list">
+    <section class="card lobby-list">
         <div class="lobby-list-header">
-            <h2>Комнаты</h2>
-            <button type="button" id="update">Обновить</button>
+            <h2 class="section-title">Комнаты</h2>
+            <button type="button" id="update" class="btn btn--ghost btn--sm">Обновить</button>
         </div>
         <ul id="rooms-list"></ul>
         <p id="rooms-empty" class="lobby-empty hidden">Пока нет комнат — создайте первую.</p>
     </section>
 </main>
-
-{{#contentFor "styles"}}
-    <link rel="stylesheet" href="/css/lobby.css">
-{{/contentFor}}
 
 {{#contentFor "scripts"}}
     <script src="/scripts/lobbyRoomsScript.js"></script>

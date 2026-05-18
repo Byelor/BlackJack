@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="ru">
-    <head>
-        {{{block "head"}}}
-        {{{block "styles"}}}
-        <link rel="stylesheet" href="/css/styles.css">
-        <link rel="stylesheet" href="/css/game.css">
-    </head>
-    <body data-room-id="{{roomId}}" data-user-id="{{userId}}">
-    {{> "header"}}
-        {{{body}}}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{{block "head"}}}
+    {{{block "styles"}}}
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/game.css">
+</head>
+<body class="app app--game" data-room-id="{{roomId}}" data-user-id="{{userId}}">
+    {{> "header" user=user}}
+    {{{body}}}
     {{{block "scripts"}}}
-    <script src="/scripts/logout.js"></script>
     <script src="/scripts/roomHeaderScript.js"></script>
-    </body>
+</body>
 </html>

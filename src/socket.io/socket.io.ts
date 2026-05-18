@@ -3,6 +3,7 @@ import { socketio } from "../server/server.js";
 import { authenticateSocket, guardSession } from "./socket.middleware.js";
 import engine from "../game/BlackjackEngine.js";
 import roomService from "../express/services/room.service.js";
+import userSessionRepo from "../express/repositories/userSession.redis.repository.js";
 import type {
     ClientToServerEvents,
     ServerToClientEvents,
@@ -14,6 +15,14 @@ const io = socketio as unknown as Server<ClientToServerEvents, ServerToClientEve
 
 // ─── Middleware аутентификации (для всех подключений) ─────────────────────────
 io.use(authenticateSocket as any);
+
+/** Актуальный баланс игрока из Redis-сессии */
+async function getPlayerBalance(userId: number): Promise<number> {
+    const sessionToken = await userSessionRepo.getSessionByUserId(userId);
+    if (!sessionToken) return 0;
+    const session = await userSessionRepo.getUserSessionByToken(sessionToken);
+    return session?.balance ?? 0;
+}
 
 // ─── Вспомогательная функция: обработать след. ход ───────────────────────────
 async function handleNextTurn(roomId: string, userId: number) {
@@ -37,6 +46,10 @@ async function handleNextTurn(roomId: string, userId: number) {
             dealer:      { cards: settle.dealerCards, score: settle.dealerScore },
         });
 
+        for (const r of settle.results) {
+            io.to(roomId).emit("PLAYER_BALANCE", { userId: r.userId, balance: r.newBalance });
+        }
+
         if (settle.reshuffled) {
             const game = await import("../express/repositories/room.redis.repository.js");
             const g    = await (await import("../express/repositories/room.redis.repository.js")).default.getRoomGame(roomId);
@@ -46,9 +59,11 @@ async function handleNextTurn(roomId: string, userId: number) {
         // Сброс раунда
         await engine.resetRound(roomId);
 
-        // Небольшая задержка перед следующей фазой ставок
-        setTimeout(() => {
+        // Небольшая задержка перед следующей фазой ставок + актуальные балансы
+        setTimeout(async () => {
             io.to(roomId).emit("BETTING_PHASE", {});
+            const state = await engine.buildRoomState(roomId);
+            io.to(roomId).emit("ROOM_STATE", state);
         }, 3000);
     }
 }
@@ -126,6 +141,10 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         }
 
         socket.emit("BET_CONFIRMED", { balance: result.newBalance });
+        socket.to(roomId).emit("PLAYER_BALANCE", {
+            userId: userSession.userId,
+            balance: result.newBalance,
+        });
 
         if (result.allBetsPlaced) {
             const gameState = await engine.startGame(roomId);
@@ -208,6 +227,7 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
             action:           "DOUBLE",
             hands:            result.hands,
             currentHandIndex: result.currentHandIndex,
+            balance:          await getPlayerBalance(userSession.userId),
         });
 
         await handleNextTurn(roomId, userSession.userId);
@@ -229,6 +249,7 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
             action:           "SPLIT",
             hands:            result.hands,
             currentHandIndex: result.currentHandIndex,
+            balance:          await getPlayerBalance(userSession.userId),
         });
 
         // После сплита продолжаем с той же руки — не переходим к nextTurn
@@ -251,6 +272,7 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
             action:           "SURRENDER",
             hands:            result.hands,
             currentHandIndex: result.currentHandIndex,
+            balance:          await getPlayerBalance(userSession.userId),
         });
 
         await handleNextTurn(roomId, userSession.userId);

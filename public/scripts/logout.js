@@ -1,25 +1,23 @@
-const logout = document.getElementById("logout");
-if (!logout) {
-    // На страницах без кнопки logout (например, лобби) скрипт не нужен
-} else logout.addEventListener("click", async (event)=>{
-    event.preventDefault();
-    try{
-        const response = await fetch("/api/authorization/logout", {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
+(function () {
+    const btn = document.getElementById("logout");
+    if (!btn || btn.dataset.logoutBound === "1") return;
+    btn.dataset.logoutBound = "1";
+
+    btn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        try {
+            const response = await fetch("/api/authorization/logout", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+            });
+            const responseJson = await response.json();
+            if (responseJson["message"] === "all good") {
+                window.location.href = "/main";
+                return;
             }
-        })
-        console.log(response);
-        const responseJson = await response.json();
-        const message = responseJson["message"];
-        if(message === "all good"){
-            window.location.href = "/main";
-            return;
+            console.log("Ошибка при попытке выхода из аккаунта!");
+        } catch (error) {
+            console.log("error occurred: ", error);
         }
-        console.log("Ошибка при попытке выхода из аккаунта!");
-    }
-    catch(error){
-        console.log("error occurred: ", error);
-    }
-});
+    });
+})();

@@ -1,22 +1,36 @@
-<h1>hello, this is register menu</h1>
+<div class="auth-page">
+    <div class="card auth-card">
+        <h1 class="page-title">Регистрация</h1>
+        <p class="page-subtitle">Создайте аккаунт и получите стартовый баланс</p>
 
-<form id="register-form" method="POST" action="/api/register">
-    <label for="nickname-input">nickname:</label>
-    <input type="text" name="nickname" id="nickname-input">
+        <form id="register-form" class="form" method="POST" action="/api/register">
+            <div class="form-group">
+                <label for="nickname-input">Никнейм</label>
+                <input type="text" name="nickname" id="nickname-input" class="input" autocomplete="username" required>
+            </div>
+            <div class="form-group">
+                <label for="email-input">Email</label>
+                <input type="email" id="email-input" name="email" class="input" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password-input">Пароль</label>
+                <input type="password" id="password-input" name="password" class="input" autocomplete="new-password" required>
+            </div>
+            <div class="form-group">
+                <label for="password-repeat-input">Повторите пароль</label>
+                <input type="password" id="password-repeat-input" name="password-repeat" class="input" autocomplete="new-password" required>
+            </div>
+            <button type="submit" class="btn btn--primary btn--block">Создать аккаунт</button>
+        </form>
 
-    <label for="email-input">email:</label>
-    <input type="email" id="email-input" name="email">
+        <p id="form-status" class="form-status"></p>
 
-    <label for="password-input">password</label>
-    <input type="password" id="password-input" name="password">
+        <p class="auth-divider">
+            Уже есть аккаунт? <a href="/authorization/login">Войти</a>
+        </p>
+    </div>
+</div>
 
-    <label for="password-repeat-input">repeat password</label>
-    <input type="password" id="password-repeat-input" name="password-repeat">
-    <button type="submit">submit</button>
-</form>
-<p id="form-status"></p>
 {{#contentFor "scripts"}}
     {{> (lookup @root "scripts")}}
 {{/contentFor}}
-
-

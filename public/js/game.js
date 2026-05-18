@@ -11,8 +11,9 @@ const roomId = document.body.dataset.roomId;
 
 // ─── Состояние на клиенте ─────────────────────────────────────────────────────
 
-let myUserId    = window.__MY_USER_ID__ ?? null;  // задаётся из HBS-шаблона
-let currentTurn = null; // userId чей сейчас ход
+const myUserId    = Number(window.__MY_USER_ID__) || null;
+let currentTurn = null;
+let myBalance   = null; // последний известный баланс текущего игрока
 
 // ─── Инициализация ────────────────────────────────────────────────────────────
 
@@ -46,6 +47,9 @@ socket.on("GAME_STARTED", (data) => {
 socket.on("PLAYER_ACTION", (data) => {
     console.log("[PLAYER_ACTION]", data);
     renderPlayerHands(data.userId, data.hands, data.currentHandIndex);
+    if (data.balance != null) {
+        setPlayerBalance(data.userId, data.balance);
+    }
 });
 
 /** Ход перешёл к другому игроку */
@@ -68,6 +72,7 @@ socket.on("ROUND_RESULT", (data) => {
     console.log("[ROUND_RESULT]", data);
     renderDealer(data.dealer.cards, data.dealer.score, true);
     renderRoundResults(data.results);
+    syncBalancesFromResults(data.results);
     setControlsDisabled(true);
 });
 
@@ -122,8 +127,14 @@ socket.on("ERROR", ({ code, message }) => {
 socket.on("BET_CONFIRMED", ({ balance }) => {
     showNotification(`Ставка принята! Баланс: ${balance}`, "success");
     updateBalance(balance);
+    if (myUserId != null) setPlayerBalance(myUserId, balance);
     hideBettingUI();
     showNotification("Ожидание других игроков...", "info");
+});
+
+/** Баланс другого игрока изменился (ставка, выплата и т.д.) */
+socket.on("PLAYER_BALANCE", ({ userId, balance }) => {
+    setPlayerBalance(userId, balance);
 });
 
 // ─── Действия игрока ─────────────────────────────────────────────────────────
@@ -182,6 +193,10 @@ document.getElementById("btn-refresh")?.addEventListener("click", () => {
     socket.emit("GET_ROOM_STATE", { roomId });
 });
 
+document.getElementById("result-modal-close")?.addEventListener("click", () => {
+    document.getElementById("result-modal").style.display = "none";
+});
+
 // ─── Render-функции ───────────────────────────────────────────────────────────
 
 function renderFullState(state) {
@@ -189,6 +204,7 @@ function renderFullState(state) {
 
     renderDealer(state.dealer.cards, state.dealer.score, state.status === "BETTING");
     renderAllPlayers(state.players);
+    syncBalancesFromPlayers(state.players);
     updateDeckCount(state.deckRemaining);
 
     if (state.status === "BETTING") {
@@ -255,7 +271,7 @@ function renderRoundResults(results) {
 }
 
 function updateControls(currentPlayerId) {
-    const isMyTurn = currentPlayerId === myUserId;
+    const isMyTurn = currentPlayerId != null && Number(currentPlayerId) === myUserId;
     ["btn-hit","btn-stand","btn-double","btn-split","btn-surrender"].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) btn.disabled = !isMyTurn;
@@ -277,9 +293,39 @@ function highlightCurrentPlayer(userId) {
 function showBettingUI()  { document.getElementById("betting-panel")?.classList.remove("hidden"); }
 function hideBettingUI()  { document.getElementById("betting-panel")?.classList.add("hidden"); }
 
+function isMe(userId) {
+    return myUserId != null && Number(userId) === myUserId;
+}
+
+/** Баланс в сайдбаре (#my-balance) */
 function updateBalance(balance) {
+    if (balance == null || Number.isNaN(Number(balance))) return;
+    myBalance = Number(balance);
     const el = document.getElementById("my-balance");
-    if (el) el.textContent = `${balance}$`;
+    if (el) el.textContent = `${myBalance}$`;
+}
+
+/** Баланс у игрока в списке на столе */
+function setPlayerBalance(userId, balance) {
+    if (balance == null || Number.isNaN(Number(balance))) return;
+    const slot = document.getElementById(`player-${userId}`);
+    const span = slot?.querySelector(".player-balance");
+    if (span) span.textContent = `${Number(balance)}$`;
+    if (isMe(userId)) updateBalance(balance);
+}
+
+function syncBalancesFromPlayers(players) {
+    if (!Array.isArray(players)) return;
+    for (const p of players) {
+        setPlayerBalance(p.userId, p.balance);
+    }
+}
+
+function syncBalancesFromResults(results) {
+    if (!Array.isArray(results)) return;
+    for (const r of results) {
+        if (r.newBalance != null) setPlayerBalance(r.userId, r.newBalance);
+    }
 }
 
 function updateDeckCount(remaining) {
@@ -327,8 +373,10 @@ function formatCard(card) {
     if (card === "??") return "🂠";
     const suitMap = { H: "♥", D: "♦", C: "♣", S: "♠" };
     const rank = card[0] === "T" ? "10" : card[0];
-    const suit = suitMap[card[1]] ?? card[1];
-    return `${rank}${suit}`;
+    const suitKey = card[1];
+    const suit = suitMap[suitKey] ?? suitKey;
+    const red = suitKey === "H" || suitKey === "D";
+    return `<span class="${red ? "card-red" : ""}">${rank}${suit}</span>`;
 }
 
 function escapeHtml(str) {

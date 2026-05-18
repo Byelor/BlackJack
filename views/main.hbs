@@ -1,6 +1,33 @@
-<h1>Привет, {{user.name}}</h1>
-<p>Баланс: {{user.balance}}</p>
-<p><a href="/lobby/rooms">Перейти в лобби → создать или выбрать комнату</a></p>
-{{#contentFor "scripts"}}
-    {{> "socket.io.scripts"}}
-{{/contentFor}}
+<main class="page page--wide">
+    <div class="dashboard">
+        <section class="card dashboard-hero">
+            <div>
+                <p class="dashboard-balance-label">Добро пожаловать</p>
+                <h1 class="dashboard-greeting">{{user.name}}</h1>
+            </div>
+            <div>
+                <p class="dashboard-balance-label">Баланс</p>
+                <p class="dashboard-balance">{{user.balance}}$</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="card__title">Быстрые действия</h2>
+            <div class="dashboard-actions">
+                <a href="/lobby/rooms" class="btn btn--primary">Перейти в лобби</a>
+                <a href="/lobby/rooms" class="btn btn--secondary">Создать комнату</a>
+            </div>
+        </section>
+
+        <section class="stat-grid">
+            <div class="stat-item">
+                <p class="stat-item__label">ID игрока</p>
+                <p class="stat-item__value">#{{user.userId}}</p>
+            </div>
+            <div class="stat-item">
+                <p class="stat-item__label">Email</p>
+                <p class="stat-item__value">{{user.email}}</p>
+            </div>
+        </section>
+    </div>
+</main>

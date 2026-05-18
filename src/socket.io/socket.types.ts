@@ -40,6 +40,7 @@ export interface PlayerActionEvent {
     action: "HIT" | "STAND" | "DOUBLE" | "SPLIT" | "SURRENDER";
     hands: HandState[];
     currentHandIndex: number;
+    balance?: number; // актуальный баланс после действия (double, split, surrender)
 }
 
 export interface RoundResultEntry {
@@ -90,6 +91,7 @@ export interface ServerToClientEvents {
     CHAT_MESSAGE:      (data: { userId: number; name: string; text: string }) => void;
     FORCE_DISCONNECT:  (data: { reason: string }) => void;
     BET_CONFIRMED:     (data: { balance: number }) => void;
+    PLAYER_BALANCE:    (data: { userId: number; balance: number }) => void;
     SESSION_INVALID:   () => void;
 }
 
