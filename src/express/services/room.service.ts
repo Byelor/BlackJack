@@ -53,6 +53,9 @@ class RoomService{
         await roomRedisRepository.removeUserFromRoom(currentRoom, userId);
         return currentRoom;
     }
+    getAllUsersFromRoom = async(roomId: string)=>{
+        return await roomRedisRepository.getAllUsersFromRoom(roomId);
+    }
 }
 
 export default new RoomService();

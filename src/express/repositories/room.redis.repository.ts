@@ -168,6 +168,10 @@ class RoomRedisRepository{
         const currentRoom = await RedisClient.get(PREFIXES.userIdRoom(userId));
         return currentRoom;
     }
+    getAllUsersFromRoom = async (roomId: string)=>{
+        const allUsers = await RedisClient.sMembers(PREFIXES.roomUsers(roomId));
+        return allUsers;
+    }
 }
 
 /*
