@@ -2,7 +2,7 @@ const logout = document.getElementById("logout");
 logout.addEventListener("click", async (event)=>{
     event.preventDefault();
     try{
-        const response = await fetch("api/authorization/logout", {
+        const response = await fetch("/api/authorization/logout", {
             method: "POST",
             headers: {
                 "content-type": "application/json",

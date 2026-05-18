@@ -2,7 +2,7 @@ import CryptoGenerator from "../support/cryptoGenerator.js";
 import type { Request, Response, NextFunction } from "express";
 import UserSessionService from "../services/userSession.service.js";
 
-class AuthorizationMiddleware{
+class AuthentificationMiddleware{
     checkUserByCookie = async (req: Request, res: Response, next: NextFunction)=>{
         const sessionToken = req.cookies["sessionToken"];
         if(!sessionToken)
@@ -20,4 +20,4 @@ class AuthorizationMiddleware{
         return next();
     }
 }
-export default new AuthorizationMiddleware();
+export default new AuthentificationMiddleware();

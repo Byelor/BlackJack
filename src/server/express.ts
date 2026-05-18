@@ -1,15 +1,21 @@
 import express from "express";
 import hbs from "express-hbs";
 import path from "path";
-import MainViewRouter from "../express/routes/main.view.router.js";
 import cp from "cookie-parser";
 
-import AuthorizationMiddleware from "../express/middlewares/authentification.middleware.js";
-import authorizationViewRouter from "../express/routes/authorization.view.router.js";
-import authorizationApiRouter from "../express/api/routers/authorization.api.router.js";
+import authorizationViewRouter from "../express/views/routes/authorization.view.router.js";
+import MainViewRouter from "../express/views/routes/main.view.router.js";
+import roomViewRouter from "../express/views/routes/room.view.router.js";
 
+import authorizationApiRouter from "../express/api/routers/authorization.api.router.js";
+import roomsApiRouter from "../express/api/routers/rooms.api.router.js";
+
+import AuthorizationMiddleware from "../express/middlewares/authentification.middleware.js";
+import refreshCookieMiddleware from "../express/middlewares/refreshCookie.middleware.js";
+import checkForAuthentificationMiddleware from "../express/middlewares/checkForAuthentification.middleware.js";
 import setCookie from "../express/support/setCookie.support.js";
 
+import checkForAuthAPIMiddleware from "../express/middlewares/checkForAuthAPI.middleware.js";
 
 import HandlebarsHelpers from "../../handlebars_helpers/registerHelpers.js";
 
@@ -30,18 +36,20 @@ app.get('/setcookie', setCookie);
 app.use(cp());
 
 app.use(AuthorizationMiddleware.checkUserByCookie);
+app.use(refreshCookieMiddleware.refreshSession);
+
+//routes
 
 app.use("/authorization", authorizationViewRouter);
 
-
+app.use("/lobby", checkForAuthentificationMiddleware.checkUser, roomViewRouter);   
 app.use("/main", MainViewRouter);
 
 app.use(express.json());
-
+app.use("/api/lobby", checkForAuthAPIMiddleware.checkUser, roomsApiRouter);
 app.use("/api/authorization", authorizationApiRouter);
-//routes
 
-app.use("/", (req, res)=>{
-    res.redirect("/main");
-})  
+// app.use("/", (req, res)=>{
+//     res.redirect("/main");
+// })  
 export default app;

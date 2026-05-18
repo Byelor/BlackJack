@@ -4,6 +4,7 @@
     "@types/hbs": "^4.0.5",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.20.0",
+    "@types/socket.io": "^3.0.1",
     "nodemon": "^3.1.14",
     "sass": "^1.99.0",
     "ts-node": "^10.9.2",
@@ -22,12 +23,15 @@
     "hbs": "^4.2.1",
     "pg": "^8.20.0",
     "redis": "^5.12.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "ws": "^8.20.0"
   },
   "name": "blackjack",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "npx nodemon --env-file=.env --exec tsx src/index.ts"
+    "start": "npx nodemon --env-file=.env --exec tsx src/index.ts",
+    "test": "npx nodemon --exec tsx src/test.ts"
   }
 }

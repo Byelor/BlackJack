@@ -1,6 +1,8 @@
 import userSessionRedisRepository from "../repositories/userSession.redis.repository.js";
 import type UserSession from "../models/userSession.dto.js";
 import cryptoGenerator from "../support/cryptoGenerator.js";
+import { EXPIRATION_TIME } from "../support/expirationTime.helper.js";
+
 class UserSessionService{
     //login service method
     setSession = async (userSession: UserSession)=>{
@@ -9,7 +11,7 @@ class UserSessionService{
         }
         const generatedToken = cryptoGenerator.generateSessionToken(16);
 
-        const fullSessionToken = await userSessionRedisRepository.setSession(userSession, generatedToken, 43200);
+        const fullSessionToken = await userSessionRedisRepository.setSession(userSession, generatedToken, EXPIRATION_TIME.redis);
         return fullSessionToken;
     }
     getUserSessionByToken = async (sessionToken: string)=>{
@@ -19,6 +21,9 @@ class UserSessionService{
     removeSessionByToken = async (sessionToken: string)=>{
         return await userSessionRedisRepository.deleteSessionBySessionToken(sessionToken);
         
+    }
+    refreshSessionByToken = async (sessionToken: string)=>{
+        return await userSessionRedisRepository.refreshSessionByToken(sessionToken, EXPIRATION_TIME.redis);
     }
 }
 

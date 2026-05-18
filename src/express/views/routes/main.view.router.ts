@@ -1,5 +1,5 @@
 import {Router} from "express";
-import MainViewController from "../views/controllers/main.view.controller.js";
+import MainViewController from "../controllers/main.view.controller.js";
 
 
 class MainViewRouter{

@@ -1,23 +1,27 @@
 import app from "./express.js";
 import http from "node:http";
 
-import {WebSocketServer, WebSocket as WS} from "ws";
+
+import {Server, Socket} from "socket.io";
+
+import cookie from "cookie";
 
 const server = http.createServer(app);
 
-const wss = new WebSocketServer({server});
 
-import myEmitter from "./router.js";
+const socketio = new Server(server, {cors:{
+    origin: ["http://127.0.0.1:8888","*"],
+    methods: ["GET", "POST"]
+}});
 
-
-wss.on("connection",(ws, req)=>{
-    console.log("new ws connection");
-    ws.on("message", (message)=>{
-        const {event, obj} = JSON.parse(message.toString());
-        myEmitter.emit(event, obj, ws);
-        
-
-    });
+socketio.on("connection", async (socket: Socket)=>{
+    const cookies = cookie.parse(socket.handshake.headers.cookie || "");
+    const sessionToken = cookies["sessionToken"];
+    if(!sessionToken)
+    {
+        return;
+    }
 });
 
-export {server, wss};
+
+export {server, socketio};

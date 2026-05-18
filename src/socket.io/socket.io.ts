@@ -1,0 +1,77 @@
+import { socketio } from "../server/server.js";
+import {Socket} from "socket.io";
+
+
+    // Пользователь пытается зайти в комнату - проверка на заполненность лоби. - вне сокетио, в моменте, при выборе комнаты, ещё до подключения к сокетио
+    //        Проверки в редис
+
+socketio.on("connection", (socket: Socket)=>{
+
+});
+
+
+    /*
+        События 
+        ROOM_CONNECT - высылает состояние комнаты, (состояние комнаты в редис обновлено до его подключения по сокетио), пользователь занимает место в комнате
+
+        ROOM_DISCONNECT - аналогично DISCONNECT - отключает пользователя от всех комнат, очищает его состояние из комнаты в редис
+
+        всем событиям, связанным со столом присваивать айди, благодаря которому, если пользователь потерял какое-то событие, то он мог бы запросить
+        состояние комнаты, чтобы её переотрисовать и ничего не потерять 
+
+        HIT
+        STAY
+        SPLIT
+        DOUBLE_HIT
+        SURRENDER
+        MESSAGE
+
+   hset roomMeta: (roomId: string)=>{return `room:meta:${roomId}`}, 
+   hset roomUser: (roomId: string, userId: number)=>{ return `room:player:${roomId}:user:${userId}`;  },
+   set roomUsers: (roomId: string) => {return `room:users:${roomId}`},
+   hset roomGame: (roomId: string) => {return `room:game:${roomId}`},
+   key - value userIdRoom: (userId: number)=> {return `user:id:room:${userId}`}
+
+    */
+
+
+    /*
+        Примерная структура Redis
+        room-<room_id>-users - хранит user_sess-<user_id> - SET
+
+        room-<room_id>-meta
+        {
+            NAME: string 
+            DESCRIPTION: string
+            MAX_PLAYERS_COUNT: number
+            is_PRIVATE: bool
+            PASSWORD: string
+
+        }
+
+        room-<room_id> 
+        DEALER: - массив строк - рука диллера
+        STATUS: string - PLAYING, BETTING
+        players: set string - список пользователей
+        CURRENT_PLAYER: string
+        DECK: string[] - карточная колода
+
+        room-<room_id>-player-<user_id> - хранит состояние игрока с таким айди в комнате с некоторым айди HSET
+        имеет множество полей
+        CURRENT_HAND_INDEX: 0 - по умолчанию 0, нужно для работы со сплитами
+        HANDS: number - массив рук пользователей, может быть несколько из-за сплитов
+            {
+                BET: number - величина ставки 
+                CARDS: string - массив карт
+                STATUS: string - состояние текущей руки
+                СОСТОЯНИЯ РУКИ:
+                    ACTIVE - можно совершать почти любые действия с рукой
+                    STOOD - фиксирование руки, невозможно совершать другие действия
+                    DOUBLE_HIT - игрок получает ровно одну карту, ставка удваивается, невозможно ничего совершить
+
+                    SURRENDER - рука закрывается, возвращается половина ставки
+                    BUST - перебор, рука сразу закрыается, деньги забираются
+                    BLACKJACK - срабатывает только в самом начале игры - чистый блекджек - рука закрывается - победа игрока
+            }
+
+    */
