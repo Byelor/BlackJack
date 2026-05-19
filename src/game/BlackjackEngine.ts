@@ -174,8 +174,7 @@ class BlackjackEngine {
         for (const uid of userIds) {
             const userId  = Number(uid);
             const session = await userSessionRepo.getSessionByUserId(userId);
-            const ps      = allStates.get(userId);
-            if (!ps) continue;
+            const ps      = allStates.get(userId) ?? { hands: [], currentHandIndex: 0 };
             players.push({
                 userId,
                 name:             session ? (await userSessionRepo.getUserSessionByToken(session))?.name ?? uid : uid,

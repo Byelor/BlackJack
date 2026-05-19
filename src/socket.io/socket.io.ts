@@ -4,6 +4,8 @@ import { authenticateSocket, guardSession } from "./socket.middleware.js";
 import engine from "../game/BlackjackEngine.js";
 import roomService from "../express/services/room.service.js";
 import userSessionRepo from "../express/repositories/userSession.redis.repository.js";
+import roomRepo from "../express/repositories/room.redis.repository.js";
+import { room_status } from "../express/models/room.dto.js";
 import type {
     ClientToServerEvents,
     ServerToClientEvents,
@@ -122,11 +124,35 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
     });
 
     // ── GET_ROOM_STATE ────────────────────────────────────────────────────────
-    socket.on("GET_ROOM_STATE", async ({ roomId }) => {
+    socket.on("GET_ROOM_STATE", async (payload, ack) => {
         const { userSession } = socket.data;
-        if (!userSession) return;
-        const state = await engine.buildRoomState(roomId);
-        socket.emit("ROOM_STATE", state);
+        if (!userSession) {
+            ack?.({ ok: false, message: "Не авторизован" });
+            return;
+        }
+
+        const roomId = payload?.roomId ?? socket.data.currentRoomId;
+        if (!roomId) {
+            ack?.({ ok: false, message: "Комната не указана" });
+            return;
+        }
+
+        try {
+            const game = await roomRepo.getRoomGame(roomId);
+            if (!game) {
+                ack?.({ ok: false, message: "Игра не найдена" });
+                return;
+            }
+            // При ручном обновлении показываем полное состояние (включая карты дилера)
+            const revealDealer = game.status !== room_status.PLAYING;
+            const state = await engine.buildRoomState(roomId, revealDealer);
+            socket.emit("ROOM_STATE", state);
+            ack?.({ ok: true });
+        } catch (err) {
+            console.error("[GET_ROOM_STATE]", err);
+            socket.emit("ERROR", { code: "STATE_FAILED", message: "Не удалось обновить состояние" });
+            ack?.({ ok: false, message: "Не удалось обновить состояние" });
+        }
     });
 
     // ── PLACE_BET ─────────────────────────────────────────────────────────────

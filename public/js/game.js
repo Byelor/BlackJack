@@ -7,19 +7,38 @@
  */
 
 const socket = io({ transports: ["websocket"] });
-const roomId = document.body.dataset.roomId;
 
 // ─── Состояние на клиенте ─────────────────────────────────────────────────────
 
 const myUserId    = Number(window.__MY_USER_ID__) || null;
 let currentTurn = null;
-let myBalance   = null; // последний известный баланс текущего игрока
+let myBalance   = null;
+let lastRoomState = null;
+
+function getRoomId() {
+    return document.body?.dataset?.roomId || null;
+}
+
+function emitGameEvent(event, payload = {}) {
+    const roomId = getRoomId();
+    if (!roomId) {
+        showNotification("Комната не определена", "error");
+        return false;
+    }
+    if (!socket.connected) {
+        showNotification("Нет соединения с сервером", "error");
+        return false;
+    }
+    socket.emit(event, { roomId, ...payload });
+    return true;
+}
 
 // ─── Инициализация ────────────────────────────────────────────────────────────
 
 socket.on("connect", () => {
     console.log("[socket] connected:", socket.id);
-    socket.emit("ROOM_JOIN", { roomId });
+    const roomId = getRoomId();
+    if (roomId) socket.emit("ROOM_JOIN", { roomId });
 });
 
 socket.on("disconnect", () => {
@@ -32,6 +51,7 @@ socket.on("disconnect", () => {
 /** Полное состояние комнаты (при входе или GET_ROOM_STATE) */
 socket.on("ROOM_STATE", (data) => {
     console.log("[ROOM_STATE]", data);
+    lastRoomState = data;
     renderFullState(data);
 });
 
@@ -50,13 +70,24 @@ socket.on("PLAYER_ACTION", (data) => {
     if (data.balance != null) {
         setPlayerBalance(data.userId, data.balance);
     }
+    if (isMe(data.userId) && lastRoomState) {
+        const me = lastRoomState.players.find(p => isMe(p.userId));
+        if (me) {
+            me.hands = data.hands;
+            me.currentHandIndex = data.currentHandIndex;
+            updateActionButtons(lastRoomState);
+        }
+    }
 });
 
 /** Ход перешёл к другому игроку */
 socket.on("TURN_CHANGED", ({ userId }) => {
     console.log("[TURN_CHANGED] userId:", userId);
     currentTurn = userId;
-    updateControls(userId);
+    if (lastRoomState) {
+        lastRoomState.currentPlayerId = userId;
+        updateActionButtons(lastRoomState);
+    }
     highlightCurrentPlayer(userId);
 });
 
@@ -81,6 +112,7 @@ socket.on("BETTING_PHASE", ({ deckShuffled }) => {
     console.log("[BETTING_PHASE]");
     if (deckShuffled) showNotification("Колода перетасована!", "info");
     showBettingUI();
+    setControlsDisabled(true);
 });
 
 /** Колода перетасована */
@@ -137,72 +169,115 @@ socket.on("PLAYER_BALANCE", ({ userId, balance }) => {
     setPlayerBalance(userId, balance);
 });
 
-// ─── Действия игрока ─────────────────────────────────────────────────────────
+// ─── Действия игрока (кнопки) ─────────────────────────────────────────────────
 
-document.getElementById("btn-hit")?.addEventListener("click", () => {
-    socket.emit("HIT", { roomId });
-});
-
-document.getElementById("btn-stand")?.addEventListener("click", () => {
-    socket.emit("STAND", { roomId });
-});
-
-document.getElementById("btn-double")?.addEventListener("click", () => {
-    socket.emit("DOUBLE", { roomId });
-});
-
-document.getElementById("btn-split")?.addEventListener("click", () => {
-    socket.emit("SPLIT", { roomId });
-});
-
-document.getElementById("btn-surrender")?.addEventListener("click", () => {
-    if (confirm("Вы уверены, что хотите сдаться? Вернётся 50% ставки.")) {
-        socket.emit("SURRENDER", { roomId });
+function requestRoomState() {
+    const roomId = getRoomId();
+    if (!roomId) {
+        showNotification("Комната не определена", "error");
+        return;
     }
-});
+    if (!socket.connected) {
+        showNotification("Нет соединения с сервером", "error");
+        return;
+    }
 
-document.getElementById("btn-bet")?.addEventListener("click", () => {
-    const input  = document.getElementById("bet-input");
-    const amount = Number(input?.value ?? 0);
-    if (amount <= 0) { showNotification("Введите корректную ставку", "error"); return; }
-    socket.emit("PLACE_BET", { roomId, amount });
-});
+    const btn = document.getElementById("btn-refresh");
+    if (btn) btn.disabled = true;
 
-// Чипы быстрой ставки
-document.querySelectorAll(".chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-        const input = document.getElementById("bet-input");
-        if (input) input.value = chip.dataset.value;
+    socket.emit("GET_ROOM_STATE", { roomId }, (res) => {
+        if (btn) btn.disabled = false;
+        if (res?.ok) {
+            showNotification("Состояние обновлено", "success");
+        } else if (res?.message) {
+            showNotification(res.message, "error");
+        }
     });
-});
 
-document.getElementById("btn-send-msg")?.addEventListener("click", sendChatMessage);
-document.getElementById("chat-input")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendChatMessage();
-});
+    setTimeout(() => {
+        if (btn?.disabled) {
+            btn.disabled = false;
+            showNotification("Таймаут ответа сервера", "warning");
+        }
+    }, 8000);
+}
 
 function sendChatMessage() {
     const input = document.getElementById("chat-input");
     const text  = input?.value?.trim();
     if (!text) return;
-    socket.emit("CHAT_MESSAGE", { roomId, text });
+    if (!emitGameEvent("CHAT_MESSAGE", { text })) return;
     input.value = "";
 }
 
-document.getElementById("btn-refresh")?.addEventListener("click", () => {
-    socket.emit("GET_ROOM_STATE", { roomId });
-});
+function initGameButtons() {
+    document.getElementById("btn-hit")?.addEventListener("click", () => {
+        emitGameEvent("HIT");
+    });
 
-document.getElementById("result-modal-close")?.addEventListener("click", () => {
-    document.getElementById("result-modal").style.display = "none";
-});
+    document.getElementById("btn-stand")?.addEventListener("click", () => {
+        emitGameEvent("STAND");
+    });
+
+    document.getElementById("btn-double")?.addEventListener("click", () => {
+        emitGameEvent("DOUBLE");
+    });
+
+    document.getElementById("btn-split")?.addEventListener("click", () => {
+        emitGameEvent("SPLIT");
+    });
+
+    document.getElementById("btn-surrender")?.addEventListener("click", () => {
+        if (confirm("Вы уверены, что хотите сдаться? Вернётся 50% ставки.")) {
+            emitGameEvent("SURRENDER");
+        }
+    });
+
+    document.getElementById("btn-bet")?.addEventListener("click", () => {
+        const input  = document.getElementById("bet-input");
+        const amount = Number(input?.value ?? 0);
+        if (amount <= 0) {
+            showNotification("Введите корректную ставку", "error");
+            return;
+        }
+        emitGameEvent("PLACE_BET", { amount });
+    });
+
+    document.querySelectorAll(".chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            const input = document.getElementById("bet-input");
+            if (input) input.value = chip.dataset.value;
+        });
+    });
+
+    document.getElementById("btn-send-msg")?.addEventListener("click", sendChatMessage);
+    document.getElementById("chat-input")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendChatMessage();
+    });
+
+    document.getElementById("btn-refresh")?.addEventListener("click", requestRoomState);
+
+    document.getElementById("result-modal-close")?.addEventListener("click", () => {
+        const modal = document.getElementById("result-modal");
+        if (modal) modal.style.display = "none";
+    });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initGameButtons);
+} else {
+    initGameButtons();
+}
 
 // ─── Render-функции ───────────────────────────────────────────────────────────
 
 function renderFullState(state) {
+    lastRoomState = state;
     currentTurn = state.currentPlayerId;
 
-    renderDealer(state.dealer.cards, state.dealer.score, state.status === "BETTING");
+    const revealDealer = state.status === "BETTING"
+        || state.dealer.cards.every(c => c !== "??");
+    renderDealer(state.dealer.cards, state.dealer.score, revealDealer);
     renderAllPlayers(state.players);
     syncBalancesFromPlayers(state.players);
     updateDeckCount(state.deckRemaining);
@@ -212,7 +287,7 @@ function renderFullState(state) {
         setControlsDisabled(true);
     } else {
         hideBettingUI();
-        updateControls(state.currentPlayerId);
+        updateActionButtons(state);
     }
 }
 
@@ -270,12 +345,35 @@ function renderRoundResults(results) {
     setTimeout(() => { modal.style.display = "none"; }, 6000);
 }
 
+function canSplit(hand) {
+    return hand.cards.length === 2 && hand.cards[0]?.[0] === hand.cards[1]?.[0];
+}
+
+function updateActionButtons(state) {
+    const isMyTurn = state.currentPlayerId != null && Number(state.currentPlayerId) === myUserId;
+    const me = state.players.find(p => isMe(p.userId));
+    const hand = me?.hands[me.currentHandIndex ?? 0];
+
+    const active = isMyTurn && hand?.status === "ACTIVE";
+
+    const hit = document.getElementById("btn-hit");
+    const stand = document.getElementById("btn-stand");
+    const dbl = document.getElementById("btn-double");
+    const split = document.getElementById("btn-split");
+    const surrender = document.getElementById("btn-surrender");
+
+    if (hit) hit.disabled = !active;
+    if (stand) stand.disabled = !active;
+    if (dbl) dbl.disabled = !active || !hand || hand.cards.length !== 2;
+    if (split) split.disabled = !active || !hand || !canSplit(hand);
+    if (surrender) surrender.disabled = !active || !hand || hand.cards.length !== 2;
+}
+
+/** @deprecated use updateActionButtons */
 function updateControls(currentPlayerId) {
-    const isMyTurn = currentPlayerId != null && Number(currentPlayerId) === myUserId;
-    ["btn-hit","btn-stand","btn-double","btn-split","btn-surrender"].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.disabled = !isMyTurn;
-    });
+    if (lastRoomState) {
+        updateActionButtons({ ...lastRoomState, currentPlayerId });
+    }
 }
 
 function setControlsDisabled(disabled) {

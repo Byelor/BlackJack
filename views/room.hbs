@@ -14,7 +14,7 @@
         <!-- Информация о колоде -->
         <div class="deck-info">
             <span id="deck-remaining">Колода: — карт</span>
-            <button id="btn-refresh" class="btn btn--ghost btn--sm">↻ Обновить</button>
+            <button type="button" id="btn-refresh" class="btn btn--ghost btn--sm" title="Запросить актуальное состояние с сервера">↻ Обновить состояние</button>
         </div>
 
         <!-- Дилер -->
@@ -50,14 +50,14 @@
             <h3 class="sidebar-title">Сделать ставку</h3>
             <div class="bet-row">
                 <input id="bet-input" type="number" min="1" max="10000" value="50" class="input">
-                <button id="btn-bet" class="btn btn--primary">Поставить</button>
+                <button type="button" id="btn-bet" class="btn btn--primary">Поставить</button>
             </div>
             <div class="bet-chips">
-                <button class="chip" data-value="10">10</button>
-                <button class="chip" data-value="25">25</button>
-                <button class="chip" data-value="50">50</button>
-                <button class="chip" data-value="100">100</button>
-                <button class="chip" data-value="500">500</button>
+                <button type="button" class="chip" data-value="10">10</button>
+                <button type="button" class="chip" data-value="25">25</button>
+                <button type="button" class="chip" data-value="50">50</button>
+                <button type="button" class="chip" data-value="100">100</button>
+                <button type="button" class="chip" data-value="500">500</button>
             </div>
         </div>
 
@@ -65,11 +65,11 @@
         <div class="sidebar-card">
             <h3 class="sidebar-title">Действия</h3>
             <div class="action-buttons">
-                <button id="btn-hit"       class="btn btn--action btn--hit"       disabled>Взять карту</button>
-                <button id="btn-stand"     class="btn btn--action btn--stand"     disabled>Стоп</button>
-                <button id="btn-double"    class="btn btn--action btn--double"    disabled>Удвоить</button>
-                <button id="btn-split"     class="btn btn--action btn--split"     disabled>Сплит</button>
-                <button id="btn-surrender" class="btn btn--action btn--surrender" disabled>Сдаться</button>
+                <button type="button" id="btn-hit"       class="btn btn--action btn--hit"       disabled>Взять карту</button>
+                <button type="button" id="btn-stand"     class="btn btn--action btn--stand"     disabled>Стоп</button>
+                <button type="button" id="btn-double"    class="btn btn--action btn--double"    disabled>Удвоить</button>
+                <button type="button" id="btn-split"     class="btn btn--action btn--split"     disabled>Сплит</button>
+                <button type="button" id="btn-surrender" class="btn btn--action btn--surrender" disabled>Сдаться</button>
             </div>
         </div>
 
@@ -79,7 +79,7 @@
             <div id="chat-messages" class="chat-messages"></div>
             <div class="chat-input-row">
                 <input id="chat-input" type="text" placeholder="Сообщение..." class="input" maxlength="300">
-                <button id="btn-send-msg" class="btn btn--ghost">→</button>
+                <button type="button" id="btn-send-msg" class="btn btn--ghost">→</button>
             </div>
         </div>
 
