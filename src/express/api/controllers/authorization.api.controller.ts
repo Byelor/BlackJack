@@ -8,13 +8,13 @@ class AuthorizationApiController{
      * Выкидывает пользователя из Socket.IO и его текущей Redis-комнаты.
      * Вызывается при логине/регистрации с тем же аккаунтом (TODO стр. 44-47).
      */
-    private kickFromRoom = async (userId: number) => {
+    private kickFromRoom = async (userId: number, reason: string = "Выполнен вход с другого устройства") => {
         try {
             const { socketio } = await import("../../../server/server.js");
             const sockets = await socketio.fetchSockets();
             for (const s of sockets) {
                 if ((s.data as any)?.userSession?.userId === userId) {
-                    s.emit("FORCE_DISCONNECT", { reason: "Выполнен вход с другого устройства" });
+                    s.emit("FORCE_DISCONNECT", { reason });
                     s.disconnect();
                 }
             }
@@ -73,7 +73,7 @@ class AuthorizationApiController{
             return;
         }
         if (req.userSession?.userId) {
-            await this.kickFromRoom(req.userSession.userId);
+            await this.kickFromRoom(req.userSession.userId, "Вы вышли из аккаунта");
         }
         const result = await userSessionService.removeSessionByToken(sessionToken);
         if (!result) {

@@ -445,7 +445,7 @@ class BlackjackEngine {
      * Возвращает: { nextUserId } | { dealerPlaying: true } | { roundOver: true, result }
      */
     nextTurn = async (roomId: string, currentUserId: number): Promise<
-        | { nextUserId: number }
+        | { nextUserId: number; currentHandIndex: number }
         | { dealerPlaying: true }
         | { roundOver: true; result: Awaited<ReturnType<BlackjackEngine["settleRound"]>> }
     > => {
@@ -459,7 +459,7 @@ class BlackjackEngine {
             if (nextHandIdx !== -1) {
                 await roomRepo.setPlayerState(roomId, currentUserId, ps.hands, nextHandIdx);
                 await roomRepo.setRoomGameFields(roomId, { current_player: String(currentUserId) });
-                return { nextUserId: currentUserId };
+                return { nextUserId: currentUserId, currentHandIndex: nextHandIdx };
             }
         }
 
@@ -471,7 +471,7 @@ class BlackjackEngine {
             const nextPs = await roomRepo.getPlayerState(roomId, nextId);
             if (nextPs && nextPs.hands.some(h => !isHandDone(h))) {
                 await roomRepo.setRoomGameFields(roomId, { current_player: String(nextId) });
-                return { nextUserId: nextId };
+                return { nextUserId: nextId, currentHandIndex: nextPs.currentHandIndex };
             }
         }
 

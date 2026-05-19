@@ -31,7 +31,7 @@ async function handleNextTurn(roomId: string, userId: number) {
     const turn = await engine.nextTurn(roomId, userId);
 
     if ("nextUserId" in turn) {
-        io.to(roomId).emit("TURN_CHANGED", { userId: turn.nextUserId });
+        io.to(roomId).emit("TURN_CHANGED", { userId: turn.nextUserId, currentHandIndex: turn.currentHandIndex });
         return;
     }
 
@@ -279,7 +279,7 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         });
 
         // После сплита продолжаем с той же руки — не переходим к nextTurn
-        io.to(roomId).emit("TURN_CHANGED", { userId: userSession.userId });
+        io.to(roomId).emit("TURN_CHANGED", { userId: userSession.userId, currentHandIndex: result.currentHandIndex });
     });
 
     // ── SURRENDER ─────────────────────────────────────────────────────────────

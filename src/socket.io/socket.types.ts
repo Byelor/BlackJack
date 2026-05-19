@@ -82,7 +82,7 @@ export interface ServerToClientEvents {
     PLAYER_LEFT:       (data: { userId: number }) => void;
     GAME_STARTED:      (data: RoomState) => void;
     PLAYER_ACTION:     (data: PlayerActionEvent) => void;
-    TURN_CHANGED:      (data: { userId: number }) => void;
+    TURN_CHANGED:      (data: { userId: number; currentHandIndex?: number }) => void;
     DEALER_PLAY:       (data: { cards: string[]; score: number }) => void;
     ROUND_RESULT:      (data: RoundResultEvent) => void;
     BETTING_PHASE:     (data: { deckShuffled?: boolean }) => void;

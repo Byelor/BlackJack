@@ -5,6 +5,7 @@
 
     btn.addEventListener("click", async (event) => {
         event.preventDefault();
+        if (!confirm("Вы уверены, что хотите выйти из аккаунта?")) return;
         try {
             const response = await fetch("/api/authorization/logout", {
                 method: "POST",

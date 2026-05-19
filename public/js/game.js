@@ -81,11 +81,18 @@ socket.on("PLAYER_ACTION", (data) => {
 });
 
 /** Ход перешёл к другому игроку */
-socket.on("TURN_CHANGED", ({ userId }) => {
-    console.log("[TURN_CHANGED] userId:", userId);
+socket.on("TURN_CHANGED", ({ userId, currentHandIndex }) => {
+    console.log("[TURN_CHANGED] userId:", userId, "currentHandIndex:", currentHandIndex);
     currentTurn = userId;
     if (lastRoomState) {
         lastRoomState.currentPlayerId = userId;
+        if (currentHandIndex != null) {
+            const player = lastRoomState.players.find(p => p.userId === userId);
+            if (player) {
+                player.currentHandIndex = currentHandIndex;
+                renderPlayerHands(userId, player.hands, currentHandIndex);
+            }
+        }
         updateActionButtons(lastRoomState);
     }
     highlightCurrentPlayer(userId);
