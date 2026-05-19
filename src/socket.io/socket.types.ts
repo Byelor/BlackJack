@@ -73,7 +73,7 @@ export interface ClientToServerEvents {
     SPLIT:          (data: { roomId: string }) => void;
     SURRENDER:      (data: { roomId: string }) => void;
     CHAT_MESSAGE:   (data: { roomId: string; text: string }) => void;
-    GET_ROOM_STATE: (data: { roomId: string }) => void;
+    GET_ROOM_STATE: (data?: { roomId?: string }, ack?: (response: { ok: boolean; message?: string }) => void) => void;
 }
 
 export interface ServerToClientEvents {
