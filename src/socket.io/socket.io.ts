@@ -12,8 +12,10 @@ import type {
     SocketData,
 } from "./socket.types.js";
 
-// Типизируем сервер
 const io = socketio as unknown as Server<ClientToServerEvents, ServerToClientEvents, {}, SocketData>;
+
+// Храним таймеры отключения по userId
+const disconnectTimers = new Map<number, NodeJS.Timeout>();
 
 // ─── Middleware аутентификации (для всех подключений) ─────────────────────────
 io.use(authenticateSocket as any);
@@ -87,6 +89,12 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         const { userSession } = socket.data;
         if (!userSession) return;
 
+        // Отменяем таймер отключения, если он был
+        if (disconnectTimers.has(userSession.userId)) {
+            clearTimeout(disconnectTimers.get(userSession.userId));
+            disconnectTimers.delete(userSession.userId);
+        }
+
         // Проверить, что игрок числится в этой комнате в Redis
         const users = await roomService.getAllUsersFromRoom(roomId);
         if (!users.includes(String(userSession.userId))) {
@@ -121,6 +129,37 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
     // ── disconnect ────────────────────────────────────────────────────────────
     socket.on("disconnect", async () => {
         await handleLeave(socket, true);
+        
+        const { userSession, currentRoomId } = socket.data;
+        if (!userSession) return;
+
+        // Если не вернулся в течение 15 секунд — окончательно удаляем из БД комнаты
+        const timer = setTimeout(async () => {
+            try {
+                if (currentRoomId) {
+                    // Принудительно завершаем руку (если был его ход)
+                    await engine.forfeitPlayer(currentRoomId, userSession.userId);
+                    const game = await (await import("../express/repositories/room.redis.repository.js")).default.getRoomGame(currentRoomId);
+                    if (game?.currentPlayer === userSession.userId) {
+                        await handleNextTurn(currentRoomId, userSession.userId);
+                    }
+                    // Оповещаем об уходе
+                    io.to(currentRoomId).emit("PLAYER_LEFT", { userId: userSession.userId });
+                }
+
+                await roomService.removeUserFromCurrentRoom(userSession.userId);
+                
+                if (currentRoomId) {
+                    const state = await engine.buildRoomState(currentRoomId);
+                    io.to(currentRoomId).emit("ROOM_STATE", state);
+                }
+            } catch (err) {
+                console.error("[disconnect timeout error]", err);
+            }
+            disconnectTimers.delete(userSession.userId);
+        }, 15000);
+        
+        disconnectTimers.set(userSession.userId, timer);
     });
 
     // ── GET_ROOM_STATE ────────────────────────────────────────────────────────
@@ -324,21 +363,21 @@ async function handleLeave(
     const { userSession, currentRoomId } = socket.data;
     if (!userSession || !currentRoomId) return;
 
-    // Если шла игра — пометить руку как стенд и продвинуть ход
-    try {
-        await engine.forfeitPlayer(currentRoomId, userSession.userId);
-        const game = await (await import("../express/repositories/room.redis.repository.js")).default.getRoomGame(currentRoomId);
-        if (game?.currentPlayer === userSession.userId) {
-            await handleNextTurn(currentRoomId, userSession.userId);
-        }
-    } catch { /* комната могла уже быть удалена */ }
-
-    socket.to(currentRoomId).emit("PLAYER_LEFT", { userId: userSession.userId });
-
     if (!isDisconnect) {
+        // Если шла игра — пометить руку как стенд и продвинуть ход
+        try {
+            await engine.forfeitPlayer(currentRoomId, userSession.userId);
+            const game = await (await import("../express/repositories/room.redis.repository.js")).default.getRoomGame(currentRoomId);
+            if (game?.currentPlayer === userSession.userId) {
+                await handleNextTurn(currentRoomId, userSession.userId);
+            }
+        } catch { /* комната могла уже быть удалена */ }
+
+        socket.to(currentRoomId).emit("PLAYER_LEFT", { userId: userSession.userId });
         socket.leave(currentRoomId);
         socket.data.currentRoomId = null;
     }
+    // Если isDisconnect = true, мы ничего не делаем сразу, ждём 15 секунд в таймере.
 }
 
 export { io };

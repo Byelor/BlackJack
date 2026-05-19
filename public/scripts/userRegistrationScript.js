@@ -14,6 +14,7 @@ registerForm.addEventListener("submit", async (event)=>{
     if(password.value != passwordRepeat.value)
     {
         formStatus.textContent = "Пароли не совпадают!";
+        return;
     }
         const sendValues = {name: nickname.value, email: email.value, password: password.value};
     try{
@@ -32,6 +33,7 @@ registerForm.addEventListener("submit", async (event)=>{
     }
     catch(error)
     {
+        formStatus.textContent = "Ошибка подключения к серверу!";
         console.log("error occurred: ", error);
     }
 
