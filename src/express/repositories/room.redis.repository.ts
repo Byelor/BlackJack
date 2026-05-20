@@ -15,7 +15,6 @@ const PREFIXES = {
 
 class RoomRedisRepository {
 
-    // ─── Лобби / мета ────────────────────────────────────────────────────────
 
     getPlayersCount = async (roomId: string) => {
         return RedisClient.sCard(PREFIXES.roomUsers(roomId));
@@ -85,7 +84,6 @@ class RoomRedisRepository {
         return await RedisClient.sMembers(PREFIXES.roomUsers(roomId));
     };
 
-    // ─── CRUD комнат ─────────────────────────────────────────────────────────
 
     createRoom = async (roomId: string, userId: number, roomMeta: RoomMeta) => {
         const multi = RedisClient.multi();
@@ -158,9 +156,7 @@ class RoomRedisRepository {
         return roomId;
     };
 
-    // ─── Игровые методы ──────────────────────────────────────────────────────
 
-    /** Полное игровое состояние комнаты */
     getRoomGame = async (roomId: string): Promise<Room | null> => {
         const raw = await RedisClient.hGetAll(PREFIXES.roomGame(roomId));
         if (!raw || !raw["room_id"]) return null;
@@ -175,12 +171,10 @@ class RoomRedisRepository {
         };
     };
 
-    /** Атомарное обновление полей room:game */
     setRoomGameFields = async (roomId: string, fields: Record<string, string>) => {
         await RedisClient.hSet(PREFIXES.roomGame(roomId), fields);
     };
 
-    /** Состояние игрока в комнате */
     getPlayerState = async (roomId: string, userId: number): Promise<{ hands: Hand[]; currentHandIndex: number } | null> => {
         const raw = await RedisClient.hGetAll(PREFIXES.roomUser(roomId, userId));
         if (!raw || raw["hands"] === undefined) return null;
@@ -190,7 +184,6 @@ class RoomRedisRepository {
         };
     };
 
-    /** Сохранить состояние игрока */
     setPlayerState = async (roomId: string, userId: number, hands: Hand[], currentHandIndex: number) => {
         await RedisClient.hSet(PREFIXES.roomUser(roomId, userId), {
             current_hand_index: String(currentHandIndex),
@@ -198,13 +191,11 @@ class RoomRedisRepository {
         });
     };
 
-    /** Кол-во колод из метаданных */
     getDeckCount = async (roomId: string): Promise<number> => {
         const val = await RedisClient.hGet(PREFIXES.roomMeta(roomId), "deck_count");
         return val ? Number(val) : 6;
     };
 
-    /** Состояния всех игроков в комнате */
     getAllPlayersStates = async (roomId: string): Promise<Map<number, { hands: Hand[]; currentHandIndex: number }>> => {
         const userIds = await RedisClient.sMembers(PREFIXES.roomUsers(roomId));
         const multi = RedisClient.multi();
