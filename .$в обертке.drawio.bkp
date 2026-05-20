@@ -2,7 +2,7 @@
   <diagram name="A3 Форма 1" id="4UMWuW4LYQygtjcPz86S">
     <mxGraphModel dx="1094" dy="770" grid="1" gridSize="3.937" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="none" math="0" shadow="0">
       <root>
-        <object label="" BlueprintName="&lt;i style=&quot;font-size: 28px; font-family: ISOCPEUR;&quot;&gt;ГУИР.410901.020 ГЧ&lt;/i&gt;" ProductName="&lt;font face=&quot;isocpeur&quot; style=&quot;font-size: 23px;&quot;&gt;&lt;i style=&quot;&quot;&gt;Веб-приложение, реализующее сетевую карточную игру &quot;Блекджек&quot;&amp;nbsp;&lt;/i&gt;&lt;/font&gt;" Material="&lt;font face=&quot;isocpeur&quot;&gt;&lt;i&gt;Схема алгоритма работы системы&lt;/i&gt;&lt;/font&gt;" Manufacturer="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;ПОИТ, гр. 410901&lt;/i&gt;&lt;/font&gt;" Designer="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;Кляус А.Б.&lt;/i&gt;&lt;/font&gt;" Checker="&lt;font data-font-src=&quot;https://fonts-online.ru/fonts/isocpeur-v102&quot; face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;Болтак С.В.&lt;/i&gt;&lt;/font&gt;" Approver="" Date="" Scale="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;1:1&lt;/i&gt;&lt;/font&gt;" id="-3bvXb9xsOaprucixAK7-0">
+        <object label="" BlueprintName="&lt;i style=&quot;font-size: 28px; font-family: ISOCPEUR;&quot;&gt;ГУИР.410901.020 ГЧ&lt;/i&gt;" ProductName="&lt;font face=&quot;isocpeur&quot; style=&quot;font-size: 23px;&quot;&gt;&lt;i style=&quot;&quot;&gt;Веб-приложение, реализующее сетевую карточную игру &quot;Блекджек&quot;&amp;nbsp;&lt;/i&gt;&lt;/font&gt;" Material="&lt;font face=&quot;isocpeur&quot;&gt;&lt;i&gt;Схема алгоритма работы системы&lt;/i&gt;&lt;/font&gt;" Manufacturer="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;ИПиЭ, гр. 410901&lt;/i&gt;&lt;/font&gt;" Designer="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;Кляус А.Б.&lt;/i&gt;&lt;/font&gt;" Checker="&lt;font data-font-src=&quot;https://fonts-online.ru/fonts/isocpeur-v102&quot; face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;Болтак С.В.&lt;/i&gt;&lt;/font&gt;" Approver="" Date="" Scale="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;1:1&lt;/i&gt;&lt;/font&gt;" id="-3bvXb9xsOaprucixAK7-0">
           <mxCell />
         </object>
         <mxCell id="-3bvXb9xsOaprucixAK7-1" parent="-3bvXb9xsOaprucixAK7-0" />
@@ -191,7 +191,7 @@
             <mxGeometry x="1161.5019999999986" y="1091.529" width="275.59" height="59.055" as="geometry" />
           </mxCell>
         </object>
-        <object placeholders="1" placeholder="Manufacturer" label="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;ПОИТ, гр. 410901&lt;/i&gt;&lt;/font&gt;" id="-3bvXb9xsOaprucixAK7-58">
+        <object placeholders="1" placeholder="Manufacturer" label="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;ИПиЭ, гр. 410901&lt;/i&gt;&lt;/font&gt;" id="-3bvXb9xsOaprucixAK7-58">
           <mxCell style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1;fillColor=none;fontFamily=GOSTRUS Type A;fontSize=24;strokeColor=#000000;" parent="-3bvXb9xsOaprucixAK7-1" vertex="1">
             <mxGeometry x="1437.1289999999906" y="1091.5559999999998" width="196.85" height="59.055" as="geometry" />
           </mxCell>
