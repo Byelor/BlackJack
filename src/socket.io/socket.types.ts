@@ -1,16 +1,14 @@
 import type UserSession from "../express/models/userSession.dto.js";
 
-// ─── Статусы ────────────────────────────────────────────────────────────────
 
 export type HandStatus = "ACTIVE" | "STOOD" | "DOUBLE-HIT" | "SURRENDER" | "BUST" | "BLACKJACK";
 export type RoomStatus = "PLAYING" | "BETTING";
 export type RoundResult = "blackjack" | "win" | "lose" | "push";
 
-// ─── Игровые объекты ─────────────────────────────────────────────────────────
 
 export interface HandState {
     bet: number;
-    cards: string[];        // компактный формат: "AH", "TS", "KD"
+    cards: string[];      
     status: HandStatus;
     score: number;
 }
@@ -28,8 +26,8 @@ export interface RoomState {
     status: RoomStatus;
     currentPlayerId: number | null;
     dealer: {
-        cards: string[];    // во время игры вторая карта = "??" (скрыта)
-        score: number;      // 0 пока скрыта
+        cards: string[];   
+        score: number;   
     };
     players: PlayerState[];
     deckRemaining: number;
@@ -40,15 +38,15 @@ export interface PlayerActionEvent {
     action: "HIT" | "STAND" | "DOUBLE" | "SPLIT" | "SURRENDER";
     hands: HandState[];
     currentHandIndex: number;
-    balance?: number; // актуальный баланс после действия (double, split, surrender)
+    balance?: number; 
 }
 
 export interface RoundResultEntry {
     userId: number;
     name: string;
     result: RoundResult;
-    payout: number;      // всего возвращено на счёт (включая ставку)
-    netProfit: number;   // чистая прибыль/убыток за раунд
+    payout: number;      
+    netProfit: number;   
     newBalance: number;
     hands: HandState[];
 }
@@ -61,7 +59,6 @@ export interface RoundResultEvent {
     };
 }
 
-// ─── Socket.IO типизированные интерфейсы ─────────────────────────────────────
 
 export interface ClientToServerEvents {
     ROOM_JOIN:      (data: { roomId: string }) => void;
@@ -95,7 +92,6 @@ export interface ServerToClientEvents {
     SESSION_INVALID:   () => void;
 }
 
-// ─── Данные сокета (socket.data) ─────────────────────────────────────────────
 
 export interface SocketData {
     userSession: UserSession | null;

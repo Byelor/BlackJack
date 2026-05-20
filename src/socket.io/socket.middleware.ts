@@ -5,11 +5,7 @@ import type { SocketData } from "./socket.types.js";
 
 type SocketWithData = Socket & { data: SocketData };
 
-/**
- * Middleware подключения: читает куку, проверяет сессию в Redis,
- * сохраняет userSession и sessionToken в socket.data.
- * Вызывается один раз при установке соединения.
- */
+
 export const authenticateSocket = async (
     socket: SocketWithData,
     next: (err?: Error) => void
@@ -35,10 +31,6 @@ export const authenticateSocket = async (
     next();
 };
 
-/**
- * Проверяет сессию перед каждым ивентом.
- * Использовать как socket.use() внутри connection handler.
- */
 export const guardSession = async (
     socket: SocketWithData,
     next: (err?: Error) => void
@@ -55,7 +47,6 @@ export const guardSession = async (
         socket.disconnect();
         return;
     }
-    // Обновляем данные сессии (баланс мог измениться)
     socket.data.userSession = session;
     next();
 };
