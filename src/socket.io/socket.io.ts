@@ -14,13 +14,10 @@ import type {
 
 const io = socketio as unknown as Server<ClientToServerEvents, ServerToClientEvents, {}, SocketData>;
 
-// Храним таймеры отключения по userId
 const disconnectTimers = new Map<number, NodeJS.Timeout>();
 
-// ─── Middleware аутентификации (для всех подключений) ─────────────────────────
 io.use(authenticateSocket as any);
 
-/** Актуальный баланс игрока из Redis-сессии */
 async function getPlayerBalance(userId: number): Promise<number> {
     const sessionToken = await userSessionRepo.getSessionByUserId(userId);
     if (!sessionToken) return 0;
@@ -28,7 +25,6 @@ async function getPlayerBalance(userId: number): Promise<number> {
     return session?.balance ?? 0;
 }
 
-// ─── Вспомогательная функция: обработать след. ход ───────────────────────────
 async function handleNextTurn(roomId: string, userId: number) {
     const turn = await engine.nextTurn(roomId, userId);
 
@@ -38,11 +34,9 @@ async function handleNextTurn(roomId: string, userId: number) {
     }
 
     if ("dealerPlaying" in turn) {
-        // Дилер тянет карты
         const dealerResult = await engine.playDealer(roomId);
         io.to(roomId).emit("DEALER_PLAY", dealerResult);
 
-        // Итоги раунда
         const settle = await engine.settleRound(roomId);
 
         io.to(roomId).emit("ROUND_RESULT", {
@@ -60,10 +54,8 @@ async function handleNextTurn(roomId: string, userId: number) {
             io.to(roomId).emit("DECK_SHUFFLED", { remainingCards: g?.deck.length ?? 0 });
         }
 
-        // Сброс раунда
         await engine.resetRound(roomId);
 
-        // Небольшая задержка перед следующей фазой ставок + актуальные балансы
         setTimeout(async () => {
             io.to(roomId).emit("BETTING_PHASE", {});
             const state = await engine.buildRoomState(roomId);
@@ -72,37 +64,31 @@ async function handleNextTurn(roomId: string, userId: number) {
     }
 }
 
-// ─── Основной обработчик подключений ─────────────────────────────────────────
 io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>) => {
     const { userSession } = socket.data;
     if (!userSession) return;
 
-    // Проверка сессии перед каждым ивентом
     socket.use(async ([event, ...args], next) => {
         await guardSession(socket as any, next);
     });
 
     console.log(`[socket] connected: userId=${userSession.userId}, socketId=${socket.id}`);
 
-    // ── ROOM_JOIN ─────────────────────────────────────────────────────────────
     socket.on("ROOM_JOIN", async ({ roomId }) => {
         const { userSession } = socket.data;
         if (!userSession) return;
 
-        // Отменяем таймер отключения, если он был
         if (disconnectTimers.has(userSession.userId)) {
             clearTimeout(disconnectTimers.get(userSession.userId));
             disconnectTimers.delete(userSession.userId);
         }
 
-        // Проверить, что игрок числится в этой комнате в Redis
         const users = await roomService.getAllUsersFromRoom(roomId);
         if (!users.includes(String(userSession.userId))) {
             socket.emit("ERROR", { code: "NOT_IN_ROOM", message: "Вы не в этой комнате" });
             return;
         }
 
-        // Выйти из предыдущей socket-комнаты
         if (socket.data.currentRoomId && socket.data.currentRoomId !== roomId) {
             socket.leave(socket.data.currentRoomId);
         }
@@ -110,40 +96,33 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         await socket.join(roomId);
         socket.data.currentRoomId = roomId;
 
-        // Отправить текущее состояние только этому игроку
         const state = await engine.buildRoomState(roomId);
         socket.emit("ROOM_STATE", state);
 
-        // Уведомить остальных
         socket.to(roomId).emit("PLAYER_JOINED", {
             userId: userSession.userId,
             name:   userSession.name,
         });
     });
 
-    // ── ROOM_LEAVE ────────────────────────────────────────────────────────────
     socket.on("ROOM_LEAVE", async () => {
         await handleLeave(socket);
     });
 
-    // ── disconnect ────────────────────────────────────────────────────────────
     socket.on("disconnect", async () => {
         await handleLeave(socket, true);
         
         const { userSession, currentRoomId } = socket.data;
         if (!userSession) return;
 
-        // Если не вернулся в течение 15 секунд — окончательно удаляем из БД комнаты
         const timer = setTimeout(async () => {
             try {
                 if (currentRoomId) {
-                    // Принудительно завершаем руку (если был его ход)
                     await engine.forfeitPlayer(currentRoomId, userSession.userId);
                     const game = await (await import("../express/repositories/room.redis.repository.js")).default.getRoomGame(currentRoomId);
                     if (game?.currentPlayer === userSession.userId) {
                         await handleNextTurn(currentRoomId, userSession.userId);
                     }
-                    // Оповещаем об уходе
                     io.to(currentRoomId).emit("PLAYER_LEFT", { userId: userSession.userId });
                 }
 
@@ -162,7 +141,6 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         disconnectTimers.set(userSession.userId, timer);
     });
 
-    // ── GET_ROOM_STATE ────────────────────────────────────────────────────────
     socket.on("GET_ROOM_STATE", async (payload, ack) => {
         const { userSession } = socket.data;
         if (!userSession) {
@@ -182,7 +160,6 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
                 ack?.({ ok: false, message: "Игра не найдена" });
                 return;
             }
-            // При ручном обновлении показываем полное состояние (включая карты дилера)
             const revealDealer = game.status !== room_status.PLAYING;
             const state = await engine.buildRoomState(roomId, revealDealer);
             socket.emit("ROOM_STATE", state);
@@ -194,7 +171,6 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         }
     });
 
-    // ── PLACE_BET ─────────────────────────────────────────────────────────────
     socket.on("PLACE_BET", async ({ roomId, amount }) => {
         const { userSession } = socket.data;
         if (!userSession) return;
@@ -230,7 +206,6 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         }
     });
 
-    // ── HIT ───────────────────────────────────────────────────────────────────
     socket.on("HIT", async ({ roomId }) => {
         const { userSession } = socket.data;
         if (!userSession) return;
@@ -248,14 +223,12 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
             currentHandIndex: result.currentHandIndex,
         });
 
-        // Если перебор — автоматически следующий ход
         const currentHand = result.hands[result.currentHandIndex];
         if (currentHand?.status === "BUST") {
             await handleNextTurn(roomId, userSession.userId);
         }
     });
 
-    // ── STAND ─────────────────────────────────────────────────────────────────
     socket.on("STAND", async ({ roomId }) => {
         const { userSession } = socket.data;
         if (!userSession) return;
@@ -276,7 +249,6 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         await handleNextTurn(roomId, userSession.userId);
     });
 
-    // ── DOUBLE ────────────────────────────────────────────────────────────────
     socket.on("DOUBLE", async ({ roomId }) => {
         const { userSession } = socket.data;
         if (!userSession) return;
@@ -298,7 +270,6 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         await handleNextTurn(roomId, userSession.userId);
     });
 
-    // ── SPLIT ─────────────────────────────────────────────────────────────────
     socket.on("SPLIT", async ({ roomId }) => {
         const { userSession } = socket.data;
         if (!userSession) return;
@@ -317,11 +288,9 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
             balance:          await getPlayerBalance(userSession.userId),
         });
 
-        // После сплита продолжаем с той же руки — не переходим к nextTurn
         io.to(roomId).emit("TURN_CHANGED", { userId: userSession.userId, currentHandIndex: result.currentHandIndex });
     });
 
-    // ── SURRENDER ─────────────────────────────────────────────────────────────
     socket.on("SURRENDER", async ({ roomId }) => {
         const { userSession } = socket.data;
         if (!userSession) return;
@@ -343,7 +312,6 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         await handleNextTurn(roomId, userSession.userId);
     });
 
-    // ── CHAT_MESSAGE ──────────────────────────────────────────────────────────
     socket.on("CHAT_MESSAGE", ({ roomId, text }) => {
         const { userSession } = socket.data;
         if (!userSession || !text.trim()) return;
@@ -355,7 +323,6 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
     });
 });
 
-// ─── Выход из комнаты ─────────────────────────────────────────────────────────
 async function handleLeave(
     socket: Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>,
     isDisconnect = false
@@ -364,20 +331,18 @@ async function handleLeave(
     if (!userSession || !currentRoomId) return;
 
     if (!isDisconnect) {
-        // Если шла игра — пометить руку как стенд и продвинуть ход
         try {
             await engine.forfeitPlayer(currentRoomId, userSession.userId);
             const game = await (await import("../express/repositories/room.redis.repository.js")).default.getRoomGame(currentRoomId);
             if (game?.currentPlayer === userSession.userId) {
                 await handleNextTurn(currentRoomId, userSession.userId);
             }
-        } catch { /* комната могла уже быть удалена */ }
+        } catch {  }
 
         socket.to(currentRoomId).emit("PLAYER_LEFT", { userId: userSession.userId });
         socket.leave(currentRoomId);
         socket.data.currentRoomId = null;
     }
-    // Если isDisconnect = true, мы ничего не делаем сразу, ждём 15 секунд в таймере.
 }
 
 export { io };

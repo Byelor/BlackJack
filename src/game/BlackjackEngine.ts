@@ -7,13 +7,11 @@ import { room_status } from "../express/models/room.dto.js";
 import type { Hand } from "../express/models/hand.dto.js";
 import type { PlayerState, HandState, RoomState, RoundResultEntry, RoundResult } from "../socket.io/socket.types.js";
 
-// ─── Константы ───────────────────────────────────────────────────────────────
 
 const RANKS = ["2","3","4","5","6","7","8","9","T","J","Q","K","A"] as const;
 const SUITS = ["H","D","C","S"] as const;
-const RESHUFFLE_THRESHOLD = 52; // перетасовать если осталось < 1 колоды
+const RESHUFFLE_THRESHOLD = 52; 
 
-// ─── Утилиты карт ────────────────────────────────────────────────────────────
 
 export function cardValue(card: string): number {
     if (!card) return 0;
@@ -68,12 +66,10 @@ function isHandDone(hand: Hand): boolean {
     return hand.status !== hand_status.ACTIVE;
 }
 
-/** Натуральный блекджек: ровно 2 карты и 21 очко */
 export function isNaturalBlackjack(cards: string[]): boolean {
     return cards.length === 2 && countHand(cards) === 21;
 }
 
-/** Исход одной руки и выплата (ставка уже списана при PLACE_BET) */
 function resolveHand(
     hand: Hand,
     dealerCards: string[],
@@ -112,7 +108,6 @@ function resolveHand(
     return { result: "push", payout: hand.bet };
 }
 
-/** Сводный исход игрока (несколько рук при сплите) */
 function summarizePlayerResult(
     handResults: RoundResult[],
     totalPayout: number,
@@ -136,13 +131,10 @@ function toHandState(hand: Hand): HandState {
     };
 }
 
-// ─── Blackjack Engine ────────────────────────────────────────────────────────
 
 class BlackjackEngine {
 
-    // ── Вспомогательные ──────────────────────────────────────────────────────
 
-    /** Пополнить колоду, если она опустела до конца раунда */
     private refillDeck = async (roomId: string, deck: string[]): Promise<void> => {
         if (deck.length > 0) return;
         const deckCount = await roomRepo.getDeckCount(roomId);
@@ -151,7 +143,6 @@ class BlackjackEngine {
         await roomRepo.setRoomGameFields(roomId, { reshuffle_pending: "false" });
     };
 
-    /** Вытащить карту из колоды; если порог — выставить флаг reshuffle_pending */
     private popCard = async (roomId: string, deck: string[]): Promise<string> => {
         await this.refillDeck(roomId, deck);
         const card = deck.pop()!;
@@ -161,7 +152,6 @@ class BlackjackEngine {
         return card;
     };
 
-    /** Построить RoomState из Redis для отправки клиенту */
     buildRoomState = async (roomId: string, revealDealer = false): Promise<RoomState> => {
         const game = await roomRepo.getRoomGame(roomId);
         if (!game) throw new Error("Room game not found");
@@ -169,7 +159,6 @@ class BlackjackEngine {
         const allStates = await roomRepo.getAllPlayersStates(roomId);
         const userIds   = await roomRepo.getAllUsersFromRoom(roomId);
 
-        // Имена и балансы из сессий Redis
         const players: PlayerState[] = [];
         for (const uid of userIds) {
             const userId  = Number(uid);
@@ -203,12 +192,7 @@ class BlackjackEngine {
         };
     };
 
-    // ── Управление ставками ──────────────────────────────────────────────────
 
-    /**
-     * Игрок делает ставку. Возвращает { newBalance, allBetsPlaced }.
-     * Ставка списывается сразу из сессии Redis (и PG после раунда).
-     */
     placeBet = async (roomId: string, userId: number, amount: number): Promise<{ newBalance: number; allBetsPlaced: boolean } | null> => {
         if (amount <= 0) return null;
 
@@ -220,35 +204,25 @@ class BlackjackEngine {
         const session = await userSessionRepo.getUserSessionByToken(sessionToken);
         if (!session || session.balance < amount) return null;
 
-        // Сохраняем ставку в руке игрока
         const ps = await roomRepo.getPlayerState(roomId, userId) ?? { hands: [], currentHandIndex: 0 };
         ps.hands = [{ bet: amount, cards: [], status: hand_status.ACTIVE }];
         await roomRepo.setPlayerState(roomId, userId, ps.hands, 0);
 
-        // Списываем баланс из сессии
         const newBalance = session.balance - amount;
         await userSessionRepo.setSession({ ...session, balance: newBalance }, sessionToken, 60 * 60 * 24);
 
-        // Проверяем, все ли поставили
         const allStates = await roomRepo.getAllPlayersStates(roomId);
         const allBetsPlaced = [...allStates.values()].every(s => s.hands.length > 0 && s.hands[0]!.bet > 0);
 
         return { newBalance, allBetsPlaced };
     };
 
-    // ── Начало игры ──────────────────────────────────────────────────────────
-
-    /**
-     * Запускает раунд: генерирует/обновляет колоду, раздаёт карты, проверяет блекджек.
-     * Возвращает начальный RoomState.
-     */
     startGame = async (roomId: string): Promise<RoomState> => {
         const game     = await roomRepo.getRoomGame(roomId);
         if (!game) throw new Error("Room not found");
 
         let deck = game.deck;
 
-        // Первый старт или флаг — генерируем шу
         if (deck.length === 0 || game.reshufflePending) {
             const deckCount = await roomRepo.getDeckCount(roomId);
             deck = generateDeck(deckCount);
@@ -256,10 +230,9 @@ class BlackjackEngine {
         }
 
         const userIds     = (await roomRepo.getAllUsersFromRoom(roomId)).map(Number);
-        const playerOrder = [...userIds];              // порядок ходов фиксируем
+        const playerOrder = [...userIds];             
         const dealer:string[] = [];
 
-        // Раздаём 2 карты каждому и 2 дилеру
         const playerHands = new Map<number, Hand[]>();
         for (const uid of playerOrder) {
             const ps = await roomRepo.getPlayerState(roomId, uid);
@@ -277,19 +250,16 @@ class BlackjackEngine {
 
         const dealerHasBlackjack = isNaturalBlackjack(dealer);
 
-        // Сохраняем карты игроков и проверяем натуральный блекджек
         for (const uid of playerOrder) {
             const hand = playerHands.get(uid)![0]!;
             if (isNaturalBlackjack(hand.cards)) {
                 hand.status = hand_status.BLACKJACK;
             } else if (dealerHasBlackjack) {
-                // У дилера блекджек — остальные не ходят
                 hand.status = hand_status.STOOD;
             }
             await roomRepo.setPlayerState(roomId, uid, [hand], 0);
         }
 
-        // Определяем первого активного игрока
         const firstActive = dealerHasBlackjack
             ? null
             : playerOrder.find(uid => playerHands.get(uid)![0]!.status === hand_status.ACTIVE) ?? null;
@@ -306,9 +276,7 @@ class BlackjackEngine {
         return this.buildRoomState(roomId, false);
     };
 
-    // ── Действия игрока ──────────────────────────────────────────────────────
 
-    /** HIT — взять карту */
     playerHit = async (roomId: string, userId: number): Promise<{ hands: HandState[]; currentHandIndex: number } | null> => {
         const game = await roomRepo.getRoomGame(roomId);
         if (!game || game.status !== room_status.PLAYING || game.currentPlayer !== userId) return null;
@@ -324,14 +292,12 @@ class BlackjackEngine {
 
         await roomRepo.setRoomGameFields(roomId, { deck: JSON.stringify(deck) });
 
-        // Перебор?
         if (countHand(hand.cards) > 21) hand.status = hand_status.BUST;
 
         await roomRepo.setPlayerState(roomId, userId, ps.hands, ps.currentHandIndex);
         return { hands: ps.hands.map(toHandState), currentHandIndex: ps.currentHandIndex };
     };
 
-    /** STAND — остановиться */
     playerStand = async (roomId: string, userId: number): Promise<{ hands: HandState[]; currentHandIndex: number } | null> => {
         const game = await roomRepo.getRoomGame(roomId);
         if (!game || game.status !== room_status.PLAYING || game.currentPlayer !== userId) return null;
@@ -346,7 +312,6 @@ class BlackjackEngine {
         return { hands: ps.hands.map(toHandState), currentHandIndex: ps.currentHandIndex };
     };
 
-    /** DOUBLE — удвоить ставку, получить одну карту, стенд */
     playerDouble = async (roomId: string, userId: number): Promise<{ hands: HandState[]; currentHandIndex: number; balanceDeducted: number } | null> => {
         const game = await roomRepo.getRoomGame(roomId);
         if (!game || game.status !== room_status.PLAYING || game.currentPlayer !== userId) return null;
@@ -356,31 +321,26 @@ class BlackjackEngine {
         const hand = ps.hands[ps.currentHandIndex];
         if (!hand || !canDouble(hand)) return null;
 
-        // Проверить баланс
         const sessionToken = await userSessionRepo.getSessionByUserId(userId);
         if (!sessionToken) return null;
         const session = await userSessionRepo.getUserSessionByToken(sessionToken);
         if (!session || session.balance < hand.bet) return null;
 
-        // Списать дополнительную ставку
         const newBalance = session.balance - hand.bet;
         await userSessionRepo.setSession({ ...session, balance: newBalance }, sessionToken, 60 * 60 * 24);
         hand.bet *= 2;
 
-        // Дать одну карту
         const deck = game.deck;
         const card = await this.popCard(roomId, deck);
         hand.cards.push(card);
         await roomRepo.setRoomGameFields(roomId, { deck: JSON.stringify(deck) });
 
-        // Стенд (даже при перебое)
         hand.status = countHand(hand.cards) > 21 ? hand_status.BUST : hand_status.DOUBLE;
         await roomRepo.setPlayerState(roomId, userId, ps.hands, ps.currentHandIndex);
 
         return { hands: ps.hands.map(toHandState), currentHandIndex: ps.currentHandIndex, balanceDeducted: hand.bet / 2 };
     };
 
-    /** SPLIT — разделить одинаковые карты на 2 руки */
     playerSplit = async (roomId: string, userId: number): Promise<{ hands: HandState[]; currentHandIndex: number; balanceDeducted: number } | null> => {
         const game = await roomRepo.getRoomGame(roomId);
         if (!game || game.status !== room_status.PLAYING || game.currentPlayer !== userId) return null;
@@ -395,24 +355,20 @@ class BlackjackEngine {
         const session = await userSessionRepo.getUserSessionByToken(sessionToken);
         if (!session || session.balance < hand.bet) return null;
 
-        // Списать ставку за вторую руку
         const newBalance = session.balance - hand.bet;
         await userSessionRepo.setSession({ ...session, balance: newBalance }, sessionToken, 60 * 60 * 24);
 
-        // Создаём две руки из одной
         const deck  = game.deck;
         const hand1: Hand = { bet: hand.bet, cards: [hand.cards[0]!, await this.popCard(roomId, deck)], status: hand_status.ACTIVE };
         const hand2: Hand = { bet: hand.bet, cards: [hand.cards[1]!, await this.popCard(roomId, deck)], status: hand_status.ACTIVE };
         await roomRepo.setRoomGameFields(roomId, { deck: JSON.stringify(deck) });
 
-        // Заменяем текущую руку двумя
         ps.hands.splice(ps.currentHandIndex, 1, hand1, hand2);
         await roomRepo.setPlayerState(roomId, userId, ps.hands, ps.currentHandIndex);
 
         return { hands: ps.hands.map(toHandState), currentHandIndex: ps.currentHandIndex, balanceDeducted: hand.bet };
     };
 
-    /** SURRENDER — сдаться, вернуть 50% ставки */
     playerSurrender = async (roomId: string, userId: number): Promise<{ hands: HandState[]; currentHandIndex: number; returned: number } | null> => {
         const game = await roomRepo.getRoomGame(roomId);
         if (!game || game.status !== room_status.PLAYING || game.currentPlayer !== userId) return null;
@@ -425,7 +381,6 @@ class BlackjackEngine {
         hand.status = hand_status.SURRENDER;
         const returned = Math.floor(hand.bet / 2);
 
-        // Вернуть половину ставки
         const sessionToken = await userSessionRepo.getSessionByUserId(userId);
         if (sessionToken) {
             const session = await userSessionRepo.getUserSessionByToken(sessionToken);
@@ -438,12 +393,7 @@ class BlackjackEngine {
         return { hands: ps.hands.map(toHandState), currentHandIndex: ps.currentHandIndex, returned };
     };
 
-    // ── Управление ходами ────────────────────────────────────────────────────
 
-    /**
-     * Перейти к следующему ходу.
-     * Возвращает: { nextUserId } | { dealerPlaying: true } | { roundOver: true, result }
-     */
     nextTurn = async (roomId: string, currentUserId: number): Promise<
         | { nextUserId: number; currentHandIndex: number }
         | { dealerPlaying: true }
@@ -454,7 +404,6 @@ class BlackjackEngine {
 
         const ps = await roomRepo.getPlayerState(roomId, currentUserId);
         if (ps) {
-            // Если есть ещё незавершённые руки (сплит)
             const nextHandIdx = ps.hands.findIndex((h, i) => i > ps.currentHandIndex && !isHandDone(h));
             if (nextHandIdx !== -1) {
                 await roomRepo.setPlayerState(roomId, currentUserId, ps.hands, nextHandIdx);
@@ -463,7 +412,6 @@ class BlackjackEngine {
             }
         }
 
-        // Ищем следующего активного игрока
         const order   = game.playerOrder;
         const currIdx = order.indexOf(currentUserId);
         for (let i = currIdx + 1; i < order.length; i++) {
@@ -475,11 +423,9 @@ class BlackjackEngine {
             }
         }
 
-        // Все игроки завершили — ход дилера
         return { dealerPlaying: true };
     };
 
-    /** Все ли игроки закончили ход (нет ACTIVE рук) */
     isPlayerPhaseComplete = async (roomId: string): Promise<{ fromUserId: number } | null> => {
         const game = await roomRepo.getRoomGame(roomId);
         if (!game || game.status !== room_status.PLAYING) return null;
@@ -495,7 +441,6 @@ class BlackjackEngine {
         return { fromUserId };
     };
 
-    /** Дилер тянет карты пока счёт < 17 */
     playDealer = async (roomId: string): Promise<{ cards: string[]; score: number }> => {
         const game = await roomRepo.getRoomGame(roomId);
         if (!game) throw new Error("Game not found");
@@ -515,7 +460,6 @@ class BlackjackEngine {
         return { cards: dealer, score: countHand(dealer) };
     };
 
-    // ── Итоги раунда ─────────────────────────────────────────────────────────
 
     settleRound = async (roomId: string): Promise<{ results: RoundResultEntry[]; dealerCards: string[]; dealerScore: number; reshuffled: boolean }> => {
         const game = await roomRepo.getRoomGame(roomId);
@@ -551,7 +495,6 @@ class BlackjackEngine {
                 try { await userPGRepo.updateBalance(userId, newBalance); } catch { /* PG опционально */ }
             }
 
-            // При surrender половина ставки уже возвращена в playerSurrender
             let netProfit = totalPayout - totalWagered;
             for (const hand of ps.hands) {
                 if (hand.status === hand_status.SURRENDER) {
@@ -570,7 +513,6 @@ class BlackjackEngine {
             });
         }
 
-        // Проверить нужна ли перетасовка
         let reshuffled = false;
         if (game.reshufflePending) {
             const deckCount = await roomRepo.getDeckCount(roomId);
@@ -586,13 +528,9 @@ class BlackjackEngine {
         return { results, dealerCards: game.dealer, dealerScore, reshuffled };
     };
 
-    /** Сбросить руки всех игроков, вернуть к фазе BETTING */
     resetRound = async (roomId: string) => {
         const userIds = await roomRepo.getAllUsersFromRoom(roomId);
         const multi = RedisClient.multi();
-
-        // Очищаем руки через setPlayerState-like hSet
-        // (multi не поддерживает наши async методы, делаем hSet вручную)
         const { PREFIXES } = await import("../express/repositories/room.redis.repository.js");
         for (const uid of userIds) {
             multi.hSet(PREFIXES.roomUser(roomId, Number(uid)), {
@@ -611,7 +549,6 @@ class BlackjackEngine {
         await multi.exec();
     };
 
-    /** Принудительно завершить руку отключившегося игрока */
     forfeitPlayer = async (roomId: string, userId: number) => {
         const ps = await roomRepo.getPlayerState(roomId, userId);
         if (!ps) return;
