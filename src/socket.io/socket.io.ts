@@ -1,77 +1,383 @@
+import type { Server, Socket } from "socket.io";
 import { socketio } from "../server/server.js";
-import {Socket} from "socket.io";
+import { authenticateSocket, guardSession } from "./socket.middleware.js";
+import engine from "../game/BlackjackEngine.js";
+import roomService from "../express/services/room.service.js";
+import userSessionRepo from "../express/repositories/userSession.redis.repository.js";
+import roomRepo from "../express/repositories/room.redis.repository.js";
+import { room_status } from "../express/models/room.dto.js";
+import type {
+    ClientToServerEvents,
+    ServerToClientEvents,
+    SocketData,
+} from "./socket.types.js";
 
+const io = socketio as unknown as Server<ClientToServerEvents, ServerToClientEvents, {}, SocketData>;
 
-    // Пользователь пытается зайти в комнату - проверка на заполненность лоби. - вне сокетио, в моменте, при выборе комнаты, ещё до подключения к сокетио
-    //        Проверки в редис
+// Храним таймеры отключения по userId
+const disconnectTimers = new Map<number, NodeJS.Timeout>();
 
-socketio.on("connection", (socket: Socket)=>{
+// ─── Middleware аутентификации (для всех подключений) ─────────────────────────
+io.use(authenticateSocket as any);
 
-});
+/** Актуальный баланс игрока из Redis-сессии */
+async function getPlayerBalance(userId: number): Promise<number> {
+    const sessionToken = await userSessionRepo.getSessionByUserId(userId);
+    if (!sessionToken) return 0;
+    const session = await userSessionRepo.getUserSessionByToken(sessionToken);
+    return session?.balance ?? 0;
+}
 
+// ─── Вспомогательная функция: обработать след. ход ───────────────────────────
+async function handleNextTurn(roomId: string, userId: number) {
+    const turn = await engine.nextTurn(roomId, userId);
 
-    /*
-        События 
-        ROOM_CONNECT - высылает состояние комнаты, (состояние комнаты в редис обновлено до его подключения по сокетио), пользователь занимает место в комнате
+    if ("nextUserId" in turn) {
+        io.to(roomId).emit("TURN_CHANGED", { userId: turn.nextUserId, currentHandIndex: turn.currentHandIndex });
+        return;
+    }
 
-        ROOM_DISCONNECT - аналогично DISCONNECT - отключает пользователя от всех комнат, очищает его состояние из комнаты в редис
+    if ("dealerPlaying" in turn) {
+        // Дилер тянет карты
+        const dealerResult = await engine.playDealer(roomId);
+        io.to(roomId).emit("DEALER_PLAY", dealerResult);
 
-        всем событиям, связанным со столом присваивать айди, благодаря которому, если пользователь потерял какое-то событие, то он мог бы запросить
-        состояние комнаты, чтобы её переотрисовать и ничего не потерять 
+        // Итоги раунда
+        const settle = await engine.settleRound(roomId);
 
-        HIT
-        STAY
-        SPLIT
-        DOUBLE_HIT
-        SURRENDER
-        MESSAGE
+        io.to(roomId).emit("ROUND_RESULT", {
+            results:     settle.results,
+            dealer:      { cards: settle.dealerCards, score: settle.dealerScore },
+        });
 
-   hset roomMeta: (roomId: string)=>{return `room:meta:${roomId}`}, 
-   hset roomUser: (roomId: string, userId: number)=>{ return `room:player:${roomId}:user:${userId}`;  },
-   set roomUsers: (roomId: string) => {return `room:users:${roomId}`},
-   hset roomGame: (roomId: string) => {return `room:game:${roomId}`},
-   key - value userIdRoom: (userId: number)=> {return `user:id:room:${userId}`}
-
-    */
-
-
-    /*
-        Примерная структура Redis
-        room-<room_id>-users - хранит user_sess-<user_id> - SET
-
-        room-<room_id>-meta
-        {
-            NAME: string 
-            DESCRIPTION: string
-            MAX_PLAYERS_COUNT: number
-            is_PRIVATE: bool
-            PASSWORD: string
-
+        for (const r of settle.results) {
+            io.to(roomId).emit("PLAYER_BALANCE", { userId: r.userId, balance: r.newBalance });
         }
 
-        room-<room_id> 
-        DEALER: - массив строк - рука диллера
-        STATUS: string - PLAYING, BETTING
-        players: set string - список пользователей
-        CURRENT_PLAYER: string
-        DECK: string[] - карточная колода
+        if (settle.reshuffled) {
+            const game = await import("../express/repositories/room.redis.repository.js");
+            const g    = await (await import("../express/repositories/room.redis.repository.js")).default.getRoomGame(roomId);
+            io.to(roomId).emit("DECK_SHUFFLED", { remainingCards: g?.deck.length ?? 0 });
+        }
 
-        room-<room_id>-player-<user_id> - хранит состояние игрока с таким айди в комнате с некоторым айди HSET
-        имеет множество полей
-        CURRENT_HAND_INDEX: 0 - по умолчанию 0, нужно для работы со сплитами
-        HANDS: number - массив рук пользователей, может быть несколько из-за сплитов
-            {
-                BET: number - величина ставки 
-                CARDS: string - массив карт
-                STATUS: string - состояние текущей руки
-                СОСТОЯНИЯ РУКИ:
-                    ACTIVE - можно совершать почти любые действия с рукой
-                    STOOD - фиксирование руки, невозможно совершать другие действия
-                    DOUBLE_HIT - игрок получает ровно одну карту, ставка удваивается, невозможно ничего совершить
+        // Сброс раунда
+        await engine.resetRound(roomId);
 
-                    SURRENDER - рука закрывается, возвращается половина ставки
-                    BUST - перебор, рука сразу закрыается, деньги забираются
-                    BLACKJACK - срабатывает только в самом начале игры - чистый блекджек - рука закрывается - победа игрока
+        // Небольшая задержка перед следующей фазой ставок + актуальные балансы
+        setTimeout(async () => {
+            io.to(roomId).emit("BETTING_PHASE", {});
+            const state = await engine.buildRoomState(roomId);
+            io.to(roomId).emit("ROOM_STATE", state);
+        }, 3000);
+    }
+}
+
+// ─── Основной обработчик подключений ─────────────────────────────────────────
+io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>) => {
+    const { userSession } = socket.data;
+    if (!userSession) return;
+
+    // Проверка сессии перед каждым ивентом
+    socket.use(async ([event, ...args], next) => {
+        await guardSession(socket as any, next);
+    });
+
+    console.log(`[socket] connected: userId=${userSession.userId}, socketId=${socket.id}`);
+
+    // ── ROOM_JOIN ─────────────────────────────────────────────────────────────
+    socket.on("ROOM_JOIN", async ({ roomId }) => {
+        const { userSession } = socket.data;
+        if (!userSession) return;
+
+        // Отменяем таймер отключения, если он был
+        if (disconnectTimers.has(userSession.userId)) {
+            clearTimeout(disconnectTimers.get(userSession.userId));
+            disconnectTimers.delete(userSession.userId);
+        }
+
+        // Проверить, что игрок числится в этой комнате в Redis
+        const users = await roomService.getAllUsersFromRoom(roomId);
+        if (!users.includes(String(userSession.userId))) {
+            socket.emit("ERROR", { code: "NOT_IN_ROOM", message: "Вы не в этой комнате" });
+            return;
+        }
+
+        // Выйти из предыдущей socket-комнаты
+        if (socket.data.currentRoomId && socket.data.currentRoomId !== roomId) {
+            socket.leave(socket.data.currentRoomId);
+        }
+
+        await socket.join(roomId);
+        socket.data.currentRoomId = roomId;
+
+        // Отправить текущее состояние только этому игроку
+        const state = await engine.buildRoomState(roomId);
+        socket.emit("ROOM_STATE", state);
+
+        // Уведомить остальных
+        socket.to(roomId).emit("PLAYER_JOINED", {
+            userId: userSession.userId,
+            name:   userSession.name,
+        });
+    });
+
+    // ── ROOM_LEAVE ────────────────────────────────────────────────────────────
+    socket.on("ROOM_LEAVE", async () => {
+        await handleLeave(socket);
+    });
+
+    // ── disconnect ────────────────────────────────────────────────────────────
+    socket.on("disconnect", async () => {
+        await handleLeave(socket, true);
+        
+        const { userSession, currentRoomId } = socket.data;
+        if (!userSession) return;
+
+        // Если не вернулся в течение 15 секунд — окончательно удаляем из БД комнаты
+        const timer = setTimeout(async () => {
+            try {
+                if (currentRoomId) {
+                    // Принудительно завершаем руку (если был его ход)
+                    await engine.forfeitPlayer(currentRoomId, userSession.userId);
+                    const game = await (await import("../express/repositories/room.redis.repository.js")).default.getRoomGame(currentRoomId);
+                    if (game?.currentPlayer === userSession.userId) {
+                        await handleNextTurn(currentRoomId, userSession.userId);
+                    }
+                    // Оповещаем об уходе
+                    io.to(currentRoomId).emit("PLAYER_LEFT", { userId: userSession.userId });
+                }
+
+                await roomService.removeUserFromCurrentRoom(userSession.userId);
+                
+                if (currentRoomId) {
+                    const state = await engine.buildRoomState(currentRoomId);
+                    io.to(currentRoomId).emit("ROOM_STATE", state);
+                }
+            } catch (err) {
+                console.error("[disconnect timeout error]", err);
             }
+            disconnectTimers.delete(userSession.userId);
+        }, 15000);
+        
+        disconnectTimers.set(userSession.userId, timer);
+    });
 
-    */
+    // ── GET_ROOM_STATE ────────────────────────────────────────────────────────
+    socket.on("GET_ROOM_STATE", async (payload, ack) => {
+        const { userSession } = socket.data;
+        if (!userSession) {
+            ack?.({ ok: false, message: "Не авторизован" });
+            return;
+        }
+
+        const roomId = payload?.roomId ?? socket.data.currentRoomId;
+        if (!roomId) {
+            ack?.({ ok: false, message: "Комната не указана" });
+            return;
+        }
+
+        try {
+            const game = await roomRepo.getRoomGame(roomId);
+            if (!game) {
+                ack?.({ ok: false, message: "Игра не найдена" });
+                return;
+            }
+            // При ручном обновлении показываем полное состояние (включая карты дилера)
+            const revealDealer = game.status !== room_status.PLAYING;
+            const state = await engine.buildRoomState(roomId, revealDealer);
+            socket.emit("ROOM_STATE", state);
+            ack?.({ ok: true });
+        } catch (err) {
+            console.error("[GET_ROOM_STATE]", err);
+            socket.emit("ERROR", { code: "STATE_FAILED", message: "Не удалось обновить состояние" });
+            ack?.({ ok: false, message: "Не удалось обновить состояние" });
+        }
+    });
+
+    // ── PLACE_BET ─────────────────────────────────────────────────────────────
+    socket.on("PLACE_BET", async ({ roomId, amount }) => {
+        const { userSession } = socket.data;
+        if (!userSession) return;
+
+        const result = await engine.placeBet(roomId, userSession.userId, amount);
+        if (!result) {
+            socket.emit("ERROR", { code: "BET_FAILED", message: "Невозможно сделать ставку" });
+            return;
+        }
+
+        socket.emit("BET_CONFIRMED", { balance: result.newBalance });
+        socket.to(roomId).emit("PLAYER_BALANCE", {
+            userId: userSession.userId,
+            balance: result.newBalance,
+        });
+
+        if (result.allBetsPlaced) {
+            const gameState = await engine.startGame(roomId);
+            io.to(roomId).emit("GAME_STARTED", gameState);
+
+            const firstPlayer = gameState.currentPlayerId;
+            if (firstPlayer !== null) {
+                const fp = gameState.players.find(p => p.userId === firstPlayer);
+                if (fp?.hands.every(h => h.status !== "ACTIVE")) {
+                    await handleNextTurn(roomId, firstPlayer);
+                }
+            } else {
+                const advance = await engine.isPlayerPhaseComplete(roomId);
+                if (advance) {
+                    await handleNextTurn(roomId, advance.fromUserId);
+                }
+            }
+        }
+    });
+
+    // ── HIT ───────────────────────────────────────────────────────────────────
+    socket.on("HIT", async ({ roomId }) => {
+        const { userSession } = socket.data;
+        if (!userSession) return;
+
+        const result = await engine.playerHit(roomId, userSession.userId);
+        if (!result) {
+            socket.emit("ERROR", { code: "ACTION_FAILED", message: "Нельзя взять карту" });
+            return;
+        }
+
+        io.to(roomId).emit("PLAYER_ACTION", {
+            userId:           userSession.userId,
+            action:           "HIT",
+            hands:            result.hands,
+            currentHandIndex: result.currentHandIndex,
+        });
+
+        // Если перебор — автоматически следующий ход
+        const currentHand = result.hands[result.currentHandIndex];
+        if (currentHand?.status === "BUST") {
+            await handleNextTurn(roomId, userSession.userId);
+        }
+    });
+
+    // ── STAND ─────────────────────────────────────────────────────────────────
+    socket.on("STAND", async ({ roomId }) => {
+        const { userSession } = socket.data;
+        if (!userSession) return;
+
+        const result = await engine.playerStand(roomId, userSession.userId);
+        if (!result) {
+            socket.emit("ERROR", { code: "ACTION_FAILED", message: "Нельзя остановиться" });
+            return;
+        }
+
+        io.to(roomId).emit("PLAYER_ACTION", {
+            userId:           userSession.userId,
+            action:           "STAND",
+            hands:            result.hands,
+            currentHandIndex: result.currentHandIndex,
+        });
+
+        await handleNextTurn(roomId, userSession.userId);
+    });
+
+    // ── DOUBLE ────────────────────────────────────────────────────────────────
+    socket.on("DOUBLE", async ({ roomId }) => {
+        const { userSession } = socket.data;
+        if (!userSession) return;
+
+        const result = await engine.playerDouble(roomId, userSession.userId);
+        if (!result) {
+            socket.emit("ERROR", { code: "ACTION_FAILED", message: "Нельзя удвоить" });
+            return;
+        }
+
+        io.to(roomId).emit("PLAYER_ACTION", {
+            userId:           userSession.userId,
+            action:           "DOUBLE",
+            hands:            result.hands,
+            currentHandIndex: result.currentHandIndex,
+            balance:          await getPlayerBalance(userSession.userId),
+        });
+
+        await handleNextTurn(roomId, userSession.userId);
+    });
+
+    // ── SPLIT ─────────────────────────────────────────────────────────────────
+    socket.on("SPLIT", async ({ roomId }) => {
+        const { userSession } = socket.data;
+        if (!userSession) return;
+
+        const result = await engine.playerSplit(roomId, userSession.userId);
+        if (!result) {
+            socket.emit("ERROR", { code: "ACTION_FAILED", message: "Нельзя сделать сплит" });
+            return;
+        }
+
+        io.to(roomId).emit("PLAYER_ACTION", {
+            userId:           userSession.userId,
+            action:           "SPLIT",
+            hands:            result.hands,
+            currentHandIndex: result.currentHandIndex,
+            balance:          await getPlayerBalance(userSession.userId),
+        });
+
+        // После сплита продолжаем с той же руки — не переходим к nextTurn
+        io.to(roomId).emit("TURN_CHANGED", { userId: userSession.userId, currentHandIndex: result.currentHandIndex });
+    });
+
+    // ── SURRENDER ─────────────────────────────────────────────────────────────
+    socket.on("SURRENDER", async ({ roomId }) => {
+        const { userSession } = socket.data;
+        if (!userSession) return;
+
+        const result = await engine.playerSurrender(roomId, userSession.userId);
+        if (!result) {
+            socket.emit("ERROR", { code: "ACTION_FAILED", message: "Нельзя сдаться" });
+            return;
+        }
+
+        io.to(roomId).emit("PLAYER_ACTION", {
+            userId:           userSession.userId,
+            action:           "SURRENDER",
+            hands:            result.hands,
+            currentHandIndex: result.currentHandIndex,
+            balance:          await getPlayerBalance(userSession.userId),
+        });
+
+        await handleNextTurn(roomId, userSession.userId);
+    });
+
+    // ── CHAT_MESSAGE ──────────────────────────────────────────────────────────
+    socket.on("CHAT_MESSAGE", ({ roomId, text }) => {
+        const { userSession } = socket.data;
+        if (!userSession || !text.trim()) return;
+        io.to(roomId).emit("CHAT_MESSAGE", {
+            userId: userSession.userId,
+            name:   userSession.name,
+            text:   text.slice(0, 300),
+        });
+    });
+});
+
+// ─── Выход из комнаты ─────────────────────────────────────────────────────────
+async function handleLeave(
+    socket: Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>,
+    isDisconnect = false
+) {
+    const { userSession, currentRoomId } = socket.data;
+    if (!userSession || !currentRoomId) return;
+
+    if (!isDisconnect) {
+        // Если шла игра — пометить руку как стенд и продвинуть ход
+        try {
+            await engine.forfeitPlayer(currentRoomId, userSession.userId);
+            const game = await (await import("../express/repositories/room.redis.repository.js")).default.getRoomGame(currentRoomId);
+            if (game?.currentPlayer === userSession.userId) {
+                await handleNextTurn(currentRoomId, userSession.userId);
+            }
+        } catch { /* комната могла уже быть удалена */ }
+
+        socket.to(currentRoomId).emit("PLAYER_LEFT", { userId: userSession.userId });
+        socket.leave(currentRoomId);
+        socket.data.currentRoomId = null;
+    }
+    // Если isDisconnect = true, мы ничего не делаем сразу, ждём 15 секунд в таймере.
+}
+
+export { io };

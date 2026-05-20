@@ -1,18 +1,15 @@
 <header id="header">
     <div id="logo-wrapper">
-        <a id="logo" href="/main">
-            Chorniy Yaugen
-        </a>
+        <a id="logo" href="/main">BlackJack</a>
     </div>
-    
-    <nav id="header-navigation-panel">
+    <nav id="header-navigation-panel" aria-label="Главное меню">
         <ul id="header-navigation-list">
             {{#isAuth user}}
-            <li><a class="navigation-button" href="/lobby/rooms">Rooms</a></li>
-            <li><a id="logout" class="navigation-button">logout</a></li>
+            <li><a class="navigation-button" href="/lobby/rooms">Лобби</a></li>
+            <li><a id="logout" class="navigation-button" href="#">Выйти</a></li>
             {{else}}
-            <li><a class="navigation-button" href="/authorization/login">login</a></li>
-            <li><a class="navigation-button" href="/authorization/register">register</a></li>
+            <li><a class="navigation-button" href="/authorization/login">Вход</a></li>
+            <li><a class="navigation-button" href="/authorization/register">Регистрация</a></li>
             {{/isAuth}}
         </ul>
     </nav>

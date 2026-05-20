@@ -1,38 +1,34 @@
-const header = document.querySelector("header");
+const header = document.getElementById("header");
+if (!header) {
+    console.warn("[roomHeaderScript] header not found");
+} else {
+    header.addEventListener("click", async (event) => {
+        const targetEl = event.target.closest("button, a");
+        if (!targetEl || targetEl.id === "logout") return;
 
-header.addEventListener("click", async (event)=>{
-    try{
-    event.preventDefault();
+        const href = targetEl.getAttribute("href");
+        if (!href) return;
 
-    const targetEl = event.target.closest('button, a');
-    if(!targetEl)
-    {   
-        return;
-    }
-    const choice = confirm("really?");
-    if(!choice)
-    {
-        return;
-    }
-    const response = await fetch("/api/lobby/room/leave", {
-        method: "PUT",
-        headers: {"content-type": "application/json"}
-    });
-    
-    const data = await response.json();
-    if(!data)
-    {
         event.preventDefault();
-        return;
-    }
-    console.log(data["message"]);
-    // if(1) добавить проверку, что при некоторых статус кодах не отпускать пользователя
-    // {
-    // }
-    window.location.href = targetEl.href;
+
+        if (!confirm("Покинуть комнату?")) return;
+
+        try {
+            const response = await fetch("/api/lobby/room/leave", {
+                method: "PUT",
+                headers: { "content-type": "application/json" },
+            });
+
+            const data = await response.json();
+            if (!response.ok || data?.message !== "all good") {
+                alert(data?.message ?? "Не удалось выйти из комнаты");
+                return;
+            }
+
+            window.location.href = href;
+        } catch (error) {
+            console.error("[roomHeaderScript]", error);
+            alert("Ошибка при выходе из комнаты");
+        }
+    });
 }
-catch(error)
-{
-    console.log(error);
-}
-});

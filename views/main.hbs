@@ -1,8 +1,63 @@
-<h1>Hello</h1>
-<h1>{{user.name}}</h1>
-<h1>{{user.userId}}</h1>
-<h1>{{user.email}}</h1>
-<h1>{{user.balance}}</h1>
-{{#contentFor "scripts"}}
-    {{> "socket.io.scripts"}}
-{{/contentFor}}
+{{#isAuth user}}
+<main class="page page--wide">
+    <div class="dashboard">
+        <section class="card dashboard-hero">
+            <div>
+                <p class="dashboard-balance-label">Добро пожаловать</p>
+                <h1 class="dashboard-greeting">{{user.name}}</h1>
+            </div>
+            <div>
+                <p class="dashboard-balance-label">Баланс</p>
+                <p class="dashboard-balance">{{user.balance}}$</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="card__title">Быстрые действия</h2>
+            <div class="dashboard-actions">
+                <a href="/lobby/rooms" class="btn btn--primary">Перейти в лобби</a>
+                <a href="/lobby/rooms" class="btn btn--secondary">Создать комнату</a>
+            </div>
+        </section>
+
+        <section class="stat-grid">
+            <div class="stat-item">
+                <p class="stat-item__label">ID игрока</p>
+                <p class="stat-item__value">#{{user.userId}}</p>
+            </div>
+            <div class="stat-item">
+                <p class="stat-item__label">Email</p>
+                <p class="stat-item__value">{{user.email}}</p>
+            </div>
+        </section>
+    </div>
+</main>
+{{else}}
+<main class="page page--wide">
+    <div class="landing-hero">
+        <div class="landing-content">
+            <h1 class="landing-title">BlackJack Multiplayer</h1>
+            <p class="landing-subtitle">Сыграйте в классический блекджек с друзьями в реальном времени. Испытайте удачу и свои навыки!</p>
+            <div class="landing-actions">
+                <a href="/authorization/register" class="btn btn--primary btn--large">Начать игру</a>
+                <a href="/authorization/login" class="btn btn--secondary btn--large">Войти</a>
+            </div>
+        </div>
+    </div>
+
+    <section class="landing-features">
+        <div class="feature-card">
+            <h3>Онлайн столы</h3>
+            <p>Создавайте свои комнаты или присоединяйтесь к существующим.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Живой чат</h3>
+            <p>Общайтесь с другими игроками прямо во время раздачи.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Real-time</h3>
+            <p>Мгновенная синхронизация через веб-сокеты без задержек.</p>
+        </div>
+    </section>
+</main>
+{{/isAuth}}

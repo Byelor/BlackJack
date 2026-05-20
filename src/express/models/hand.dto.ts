@@ -1,4 +1,4 @@
-enum hand_status{
+export enum hand_status{
     ACTIVE = "ACTIVE",
     STOOD = "STOOD", 
     DOUBLE = "DOUBLE-HIT",

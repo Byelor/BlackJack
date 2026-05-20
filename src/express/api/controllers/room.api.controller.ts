@@ -2,9 +2,33 @@ import type { Request, Response, NextFunction } from "express";
 import userSessionService from "../../services/userSession.service.js";
 import userService from "../../services/user.service.js";
 import roomService from "../../services/room.service.js";
-import type { Room } from "../../models/Room.dto.js";
+import type { Room } from "../../models/room.dto.js";
 import type { RoomMeta } from "../../models/room.meta.dto.js";
 class RoomsApiController{
+    createRoom = async (req: Request, res: Response, next: NextFunction) => {
+        if (!req.userSession) {
+            res.status(401).json({ message: "not logined" });
+            return;
+        }
+
+        const body = req.body ?? {};
+        const result = await roomService.createRoomForUser(req.userSession.userId, {
+            name:             body.name,
+            description:      body.description,
+            maxPlayersCount:  body.maxPlayersCount,
+            isPrivate:        body.isPrivate,
+            password:         body.password,
+            deckCount:        body.deckCount,
+        });
+
+        if ("error" in result) {
+            res.status(400).json({ message: result.error });
+            return;
+        }
+
+        res.status(201).json({ message: "all good", roomId: result.roomId });
+    };
+
     getAllRooms = async(req: Request, res: Response, next: NextFunction)=>{
        const data: RoomMeta[] | null = await roomService.getAllRoomsMeta();
        if(!data)
@@ -26,14 +50,13 @@ class RoomsApiController{
             return;
         }
         const roomId: string = req.params["roomId"] as string;
-        const {password} = req.body;
-        if(!roomId || !password)
-        {
-           res.json({message: "invalid input"});
-           return;
+        const password: string | null = req.body?.password ?? null;
+        if (!roomId) {
+            res.json({ message: "invalid input" });
+            return;
         }
-        
-        const userId = req.userSession?.userId;
+
+        const userId = req.userSession.userId;
         const result = await roomService.addUserToRoom(roomId, userId, password);
         if(!result)
         {
