@@ -1,14 +1,6 @@
-/**
- * game.js — клиентский Socket.IO скрипт для страницы комнаты BlackJack.
- * Подключается к серверу, обрабатывает все игровые события.
- *
- * Использование: передать roomId в data-атрибуте тега <body>:
- *   <body data-room-id="<roomId>">
- */
 
 const socket = io({ transports: ["websocket"] });
 
-// ─── Состояние на клиенте ─────────────────────────────────────────────────────
 
 const myUserId    = Number(window.__MY_USER_ID__) || null;
 let currentTurn = null;
@@ -33,7 +25,6 @@ function emitGameEvent(event, payload = {}) {
     return true;
 }
 
-// ─── Инициализация ────────────────────────────────────────────────────────────
 
 socket.on("connect", () => {
     console.log("[socket] connected:", socket.id);
@@ -46,16 +37,13 @@ socket.on("disconnect", () => {
     showNotification("Соединение потеряно", "error");
 });
 
-// ─── Серверные события ───────────────────────────────────────────────────────
 
-/** Полное состояние комнаты (при входе или GET_ROOM_STATE) */
 socket.on("ROOM_STATE", (data) => {
     console.log("[ROOM_STATE]", data);
     lastRoomState = data;
     renderFullState(data);
 });
 
-/** Игра началась — раздача карт */
 socket.on("GAME_STARTED", (data) => {
     console.log("[GAME_STARTED]", data);
     showNotification("Игра началась!", "success");
@@ -63,7 +51,6 @@ socket.on("GAME_STARTED", (data) => {
     updateControls(data.currentPlayerId);
 });
 
-/** Игрок совершил действие */
 socket.on("PLAYER_ACTION", (data) => {
     console.log("[PLAYER_ACTION]", data);
     renderPlayerHands(data.userId, data.hands, data.currentHandIndex);
@@ -80,7 +67,6 @@ socket.on("PLAYER_ACTION", (data) => {
     }
 });
 
-/** Ход перешёл к другому игроку */
 socket.on("TURN_CHANGED", ({ userId, currentHandIndex }) => {
     console.log("[TURN_CHANGED] userId:", userId, "currentHandIndex:", currentHandIndex);
     currentTurn = userId;
@@ -98,14 +84,12 @@ socket.on("TURN_CHANGED", ({ userId, currentHandIndex }) => {
     highlightCurrentPlayer(userId);
 });
 
-/** Дилер тянет карты */
 socket.on("DEALER_PLAY", ({ cards, score }) => {
     console.log("[DEALER_PLAY]", cards, score);
     renderDealer(cards, score, true);
     showNotification(`Дилер: ${score} очков`, "info");
 });
 
-/** Итоги раунда */
 socket.on("ROUND_RESULT", (data) => {
     console.log("[ROUND_RESULT]", data);
     renderDealer(data.dealer.cards, data.dealer.score, true);
@@ -114,7 +98,6 @@ socket.on("ROUND_RESULT", (data) => {
     setControlsDisabled(true);
 });
 
-/** Начало фазы ставок */
 socket.on("BETTING_PHASE", ({ deckShuffled }) => {
     console.log("[BETTING_PHASE]");
     if (deckShuffled) showNotification("Колода перетасована!", "info");
@@ -122,47 +105,39 @@ socket.on("BETTING_PHASE", ({ deckShuffled }) => {
     setControlsDisabled(true);
 });
 
-/** Колода перетасована */
 socket.on("DECK_SHUFFLED", ({ remainingCards }) => {
-    showNotification(`🔀 Колода перетасована (${remainingCards} карт)`, "info");
+    showNotification(`Колода перетасована (${remainingCards} карт)`, "info");
 });
 
-/** Игрок вошёл в лобби */
 socket.on("PLAYER_JOINED", ({ userId, name }) => {
     showNotification(`${name} подключился`, "info");
     addPlayerToList(userId, name);
 });
 
-/** Игрок покинул комнату */
 socket.on("PLAYER_LEFT", ({ userId }) => {
     showNotification(`Игрок #${userId} покинул комнату`, "warning");
     removePlayerFromList(userId);
 });
 
-/** Сообщение в чат */
 socket.on("CHAT_MESSAGE", ({ userId, name, text }) => {
     appendChatMessage(name, text, userId === myUserId);
 });
 
-/** Сессия истекла */
 socket.on("SESSION_INVALID", () => {
     alert("Сессия истекла. Вы будете перенаправлены на страницу входа.");
     window.location.href = "/authorization";
 });
 
-/** Принудительное отключение */
 socket.on("FORCE_DISCONNECT", ({ reason }) => {
     alert(reason);
     window.location.href = "/authorization";
 });
 
-/** Ошибка */
 socket.on("ERROR", ({ code, message }) => {
     console.error("[ERROR]", code, message);
     showNotification(message, "error");
 });
 
-/** Ставка принята */
 socket.on("BET_CONFIRMED", ({ balance }) => {
     showNotification(`Ставка принята! Баланс: ${balance}`, "success");
     updateBalance(balance);
@@ -171,12 +146,10 @@ socket.on("BET_CONFIRMED", ({ balance }) => {
     showNotification("Ожидание других игроков...", "info");
 });
 
-/** Баланс другого игрока изменился (ставка, выплата и т.д.) */
 socket.on("PLAYER_BALANCE", ({ userId, balance }) => {
     setPlayerBalance(userId, balance);
 });
 
-// ─── Действия игрока (кнопки) ─────────────────────────────────────────────────
 
 function requestRoomState() {
     const roomId = getRoomId();
@@ -276,7 +249,6 @@ if (document.readyState === "loading") {
     initGameButtons();
 }
 
-// ─── Render-функции ───────────────────────────────────────────────────────────
 
 function renderFullState(state) {
     lastRoomState = state;
@@ -376,7 +348,6 @@ function updateActionButtons(state) {
     if (surrender) surrender.disabled = !active || !hand || hand.cards.length !== 2;
 }
 
-/** @deprecated use updateActionButtons */
 function updateControls(currentPlayerId) {
     if (lastRoomState) {
         updateActionButtons({ ...lastRoomState, currentPlayerId });
@@ -402,7 +373,6 @@ function isMe(userId) {
     return myUserId != null && Number(userId) === myUserId;
 }
 
-/** Баланс в сайдбаре (#my-balance) */
 function updateBalance(balance) {
     if (balance == null || Number.isNaN(Number(balance))) return;
     myBalance = Number(balance);
@@ -410,7 +380,6 @@ function updateBalance(balance) {
     if (el) el.textContent = `${myBalance}$`;
 }
 
-/** Баланс у игрока в списке на столе */
 function setPlayerBalance(userId, balance) {
     if (balance == null || Number.isNaN(Number(balance))) return;
     const slot = document.getElementById(`player-${userId}`);
@@ -471,9 +440,7 @@ function showNotification(message, type = "info") {
     el._timer = setTimeout(() => el.classList.remove("notification--visible"), 3500);
 }
 
-// ─── Утилиты ─────────────────────────────────────────────────────────────────
 
-/** Компактная карта "AH" → "A♥" */
 function formatCard(card) {
     if (card === "??") return "🂠";
     const suitMap = { H: "♥", D: "♦", C: "♣", S: "♠" };
