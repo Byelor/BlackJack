@@ -14,8 +14,6 @@ const PREFIXES = {
 };
 
 class RoomRedisRepository {
-
-
     getPlayersCount = async (roomId: string) => {
         return RedisClient.sCard(PREFIXES.roomUsers(roomId));
     };
@@ -74,6 +72,39 @@ class RoomRedisRepository {
             deckCount: Number(obj["deck_count"]) || 6,
         };
         return roomMeta;
+    };
+
+    deleteAllRooms = async (): Promise<number> => {
+        const activeRoomIds = await this.getActiveRoomIds();
+        const roomMetaKeys = await RedisClient.keys(`${PREFIXES.roomMeta("")}*`);
+        const roomIdsFromMeta = roomMetaKeys.map((key) => key.replace(PREFIXES.roomMeta(""), ""));
+        const roomIds = Array.from(new Set([...(activeRoomIds ?? []), ...roomIdsFromMeta]));
+
+        if (roomIds.length === 0) {
+            await RedisClient.del(PREFIXES.roomsActive);
+            const orphanedUserRooms = await RedisClient.keys("user:id:room:*");
+            if (orphanedUserRooms.length) {
+                await RedisClient.del(orphanedUserRooms);
+            }
+            return 0;
+        }
+
+        await Promise.all(roomIds.map((roomId) => this.deleteRoom(roomId)));
+
+        const leftoverRoomMetaKeys = await RedisClient.keys(`${PREFIXES.roomMeta("")}*`);
+        const leftoverRoomGameKeys = await RedisClient.keys(`${PREFIXES.roomGame("")}*`);
+        const leftoverRoomUsersKeys = await RedisClient.keys(`${PREFIXES.roomUsers("")}*`);
+        const leftoverRoomPlayerKeys = await RedisClient.keys(`room:player:*`);
+        const leftoverUserRooms = await RedisClient.keys(`user:id:room:*`);
+
+        await RedisClient.del(PREFIXES.roomsActive);
+        if (leftoverRoomMetaKeys.length) await RedisClient.del(leftoverRoomMetaKeys);
+        if (leftoverRoomGameKeys.length) await RedisClient.del(leftoverRoomGameKeys);
+        if (leftoverRoomUsersKeys.length) await RedisClient.del(leftoverRoomUsersKeys);
+        if (leftoverRoomPlayerKeys.length) await RedisClient.del(leftoverRoomPlayerKeys);
+        if (leftoverUserRooms.length) await RedisClient.del(leftoverUserRooms);
+
+        return roomIds.length;
     };
 
     getUserCurrentRoomId = async (userId: number) => {
@@ -142,7 +173,6 @@ class RoomRedisRepository {
             await RedisClient.unwatch();
             return false;
         }
-
         const multi = RedisClient.multi();
         multi.del([PREFIXES.roomMeta(roomId), PREFIXES.roomGame(roomId), usersKey]);
         multi.sRem(PREFIXES.roomsActive, roomId);

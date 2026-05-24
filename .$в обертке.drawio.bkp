@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.0.3 Chrome/140.0.7339.249 Electron/38.7.0 Safari/537.36" version="29.0.3">
   <diagram name="A3 Форма 1" id="4UMWuW4LYQygtjcPz86S">
-    <mxGraphModel dx="1321" dy="2132" grid="1" gridSize="3.937" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="none" math="0" shadow="0">
+    <mxGraphModel dx="1699" dy="2408" grid="1" gridSize="3.937" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="none" math="0" shadow="0">
       <root>
         <object label="" BlueprintName="&lt;i style=&quot;font-size: 28px; font-family: ISOCPEUR;&quot;&gt;ГУИР.410901.020 ГЧ&lt;/i&gt;" ProductName="&lt;font face=&quot;isocpeur&quot; style=&quot;font-size: 23px;&quot;&gt;&lt;i style=&quot;&quot;&gt;Веб-приложение, реализующее сетевую карточную игру &quot;Блекджек&quot;&amp;nbsp;&lt;/i&gt;&lt;/font&gt;" Material="&lt;font face=&quot;isocpeur&quot;&gt;&lt;i&gt;Схема алгоритма работы системы&lt;/i&gt;&lt;/font&gt;" Manufacturer="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;ПОИТ, гр. 410901&lt;/i&gt;&lt;/font&gt;" Designer="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;Кляус А.Б.&lt;/i&gt;&lt;/font&gt;" Checker="&lt;font data-font-src=&quot;https://fonts-online.ru/fonts/isocpeur-v102&quot; face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;Болтак С.В.&lt;/i&gt;&lt;/font&gt;" Approver="" Date="" Scale="&lt;font face=&quot;ISOCPEUR&quot;&gt;&lt;i&gt;1:1&lt;/i&gt;&lt;/font&gt;" id="-3bvXb9xsOaprucixAK7-0">
           <mxCell />
@@ -246,7 +246,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-84" value="" style="group" vertex="1" connectable="0" parent="-3bvXb9xsOaprucixAK7-1">
-          <mxGeometry x="59.05" y="78.74000000000001" width="260" height="520" as="geometry" />
+          <mxGeometry x="86.61" y="82.68" width="260" height="520" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-85" value="0. Главная страница" style="text;html=1;strokeColor=none;fillColor=none;fontColor=#000000;align=center;verticalAlign=middle;fontSize=13;" vertex="1" parent="e7ulcieKEk_W-k8VDung-84">
           <mxGeometry x="-6" width="260" height="30" as="geometry" />
@@ -433,10 +433,10 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-157" value="3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="e7ulcieKEk_W-k8VDung-154">
-          <mxGeometry x="128.37" y="50" width="30" height="30" as="geometry" />
+          <mxGeometry x="89" y="50" width="30" height="30" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-158" value="Инициализация Socket.IO" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;fontSize=11;align=center;verticalAlign=middle;" vertex="1" parent="e7ulcieKEk_W-k8VDung-154">
-          <mxGeometry x="73.37" y="120" width="140" height="50" as="geometry" />
+          <mxGeometry x="34" y="120" width="140" height="50" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-159" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="e7ulcieKEk_W-k8VDung-154" source="e7ulcieKEk_W-k8VDung-161" target="e7ulcieKEk_W-k8VDung-162">
           <mxGeometry relative="1" as="geometry" />
@@ -447,19 +447,19 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-161" value="Socket-сессия действительна?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;fontSize=11;align=center;verticalAlign=middle;" vertex="1" parent="e7ulcieKEk_W-k8VDung-154">
-          <mxGeometry x="73.37" y="190" width="140" height="50" as="geometry" />
+          <mxGeometry x="34" y="190" width="140" height="50" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-162" value="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="e7ulcieKEk_W-k8VDung-154">
-          <mxGeometry x="289.37" y="200" width="30" height="30" as="geometry" />
+          <mxGeometry x="250" y="200" width="30" height="30" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-276" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="e7ulcieKEk_W-k8VDung-154" source="e7ulcieKEk_W-k8VDung-163" target="e7ulcieKEk_W-k8VDung-164">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-163" value="Подключение пользователя&lt;div&gt;ROOM_JOIN&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;fontSize=11;align=center;verticalAlign=middle;" vertex="1" parent="e7ulcieKEk_W-k8VDung-154">
-          <mxGeometry x="73.37" y="280" width="140" height="50" as="geometry" />
+          <mxGeometry x="34" y="280" width="140" height="50" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-164" value="ROOM_STATE получен&#xa;Отрисовка комнаты" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;fontSize=11;align=center;verticalAlign=middle;" vertex="1" parent="e7ulcieKEk_W-k8VDung-154">
-          <mxGeometry x="74.37" y="350" width="140" height="50" as="geometry" />
+          <mxGeometry x="35" y="350" width="140" height="50" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-165" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="e7ulcieKEk_W-k8VDung-154" source="e7ulcieKEk_W-k8VDung-168" target="e7ulcieKEk_W-k8VDung-171">
           <mxGeometry relative="1" as="geometry" />
@@ -471,7 +471,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-168" value="Действие в комнате" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;fontSize=11;align=center;verticalAlign=middle;" vertex="1" parent="e7ulcieKEk_W-k8VDung-154">
-          <mxGeometry x="74.37" y="427.5" width="140" height="50" as="geometry" />
+          <mxGeometry x="35" y="427.5" width="140" height="50" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-169" value="Ставка" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;fontSize=11;align=center;verticalAlign=middle;" vertex="1" parent="e7ulcieKEk_W-k8VDung-154">
           <mxGeometry x="260" y="497.5" width="140" height="50" as="geometry" />
@@ -580,10 +580,10 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-277" value="" style="group" vertex="1" connectable="0" parent="-3bvXb9xsOaprucixAK7-1">
-          <mxGeometry x="31.500000000000014" y="570.86" width="425" height="570" as="geometry" />
+          <mxGeometry x="31.500000000000014" y="562.99" width="425" height="570" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-278" value="4. Ставки" style="text;html=1;strokeColor=none;fillColor=none;fontColor=#000000;align=center;verticalAlign=middle;fontSize=13;" vertex="1" parent="e7ulcieKEk_W-k8VDung-277">
-          <mxGeometry x="60" y="40" width="260" height="30" as="geometry" />
+          <mxGeometry width="260" height="30" as="geometry" />
         </mxCell>
         <mxCell id="e7ulcieKEk_W-k8VDung-279" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="e7ulcieKEk_W-k8VDung-277" source="e7ulcieKEk_W-k8VDung-280" target="e7ulcieKEk_W-k8VDung-282">
           <mxGeometry relative="1" as="geometry" />
