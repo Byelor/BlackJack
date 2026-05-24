@@ -53,12 +53,16 @@ class RoomRedisRepository {
         return metas;
     };
 
-    getRoomMeta = async (roomId: string) => {
+    getRoomMeta = async (roomId: string): Promise<RoomMeta | null> => {
         const multi = RedisClient.multi();
         multi.hGetAll(PREFIXES.roomMeta(roomId));
         multi.sCard(PREFIXES.roomUsers(roomId));
         const raw = await multi.exec();
         const obj = raw[0] as unknown as Record<string, string>;
+        if (!obj || Object.keys(obj).length === 0) {
+            return null;
+        }
+
         const roomMeta: RoomMeta = {
             roomId,
             name: obj["name"] || "",
@@ -125,6 +129,26 @@ class RoomRedisRepository {
         multi.sRem(PREFIXES.roomsActive, roomId);
         await multi.exec();
         return roomId;
+    };
+
+    deleteRoomIfEmpty = async (roomId: string) => {
+        const usersKey = PREFIXES.roomUsers(roomId);
+        const initialCount = await RedisClient.sCard(usersKey);
+        if (initialCount !== 0) return false;
+
+        await RedisClient.watch(usersKey);
+        const latestCount = await RedisClient.sCard(usersKey);
+        if (latestCount !== 0) {
+            await RedisClient.unwatch();
+            return false;
+        }
+
+        const multi = RedisClient.multi();
+        multi.del([PREFIXES.roomMeta(roomId), PREFIXES.roomGame(roomId), usersKey]);
+        multi.sRem(PREFIXES.roomsActive, roomId);
+
+        const result = await multi.exec();
+        return Array.isArray(result);
     };
 
     addUserToRoom = async (roomId: string, userId: number) => {

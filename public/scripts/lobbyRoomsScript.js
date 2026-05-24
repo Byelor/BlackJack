@@ -54,9 +54,33 @@ async function joinRoom(roomObj) {
     window.location.href = `/lobby/room/${roomObj.roomId}`;
 }
 
+async function deleteRoom(roomObj) {
+    if (!confirm(`Удалить пустую комнату "${roomObj.name}"?`)) return;
+
+    const response = await fetch(`/api/lobby/room/${roomObj.roomId}`, {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data?.message ?? "Не удалось удалить комнату");
+        return;
+    }
+
+    const data = await response.json();
+    if (data?.message !== "all good") {
+        alert(data?.message ?? "Не удалось удалить комнату");
+        return;
+    }
+
+    await showRooms();
+}
+
 function makeRoom(roomObj) {
     const roomEl = document.createElement("li");
     roomEl.className = "room-card";
+    const isEmpty = Number(roomObj.currentPlayersCount) === 0;
     roomEl.innerHTML = `
         <p class="room-card__name">${escapeHtml(roomObj.name)}</p>
         ${roomObj.description ? `<p class="room-card__meta">${escapeHtml(roomObj.description)}</p>` : ""}
@@ -65,8 +89,18 @@ function makeRoom(roomObj) {
             · Колод: ${roomObj.deckCount ?? 6}
         </p>
         ${roomObj.isPrivate ? '<span class="room-card__private">Приватная</span>' : ""}
+        ${isEmpty ? '<div class="room-card__actions"><button type="button" class="btn btn--ghost btn--sm room-delete-btn">Удалить</button></div>' : ""}
     `;
     roomEl.addEventListener("click", () => joinRoom(roomObj));
+
+    if (isEmpty) {
+        const deleteBtn = roomEl.querySelector(".room-delete-btn");
+        deleteBtn?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            deleteRoom(roomObj);
+        });
+    }
+
     return roomEl;
 }
 

@@ -66,6 +66,12 @@ class RoomService{
 
         return await roomRedisRepository.deleteRoom(roomId);
     }
+    deleteEmptyRoom = async(roomId: string)=>{
+        const roomMeta = await roomRedisRepository.getRoomMeta(roomId);
+        if (!roomMeta) return false;
+
+        return await roomRedisRepository.deleteRoomIfEmpty(roomId);
+    }
     addUserToRoom = async(roomId: string, userId: number, password: string | null = null)=>{
         const meta = await roomRedisRepository.getRoomMeta(roomId);
         if(!meta)

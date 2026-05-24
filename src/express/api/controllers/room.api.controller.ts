@@ -80,5 +80,26 @@ class RoomsApiController{
         }
         res.json({message: "all good", roomId: roomId});
     }
+
+    deleteRoom = async (req: Request, res: Response, next: NextFunction)=>{
+        if(!req.userSession){
+            res.status(401).json({ message: "not logined" });
+            return;
+        }
+
+        const roomId = req.params["roomId"] as string;
+        if (!roomId) {
+            res.status(400).json({ message: "invalid input" });
+            return;
+        }
+
+        const deleted = await roomService.deleteEmptyRoom(roomId);
+        if (!deleted) {
+            res.status(409).json({ message: "room is not empty or does not exist" });
+            return;
+        }
+
+        res.json({ message: "all good" });
+    }
 }
 export default new RoomsApiController();
