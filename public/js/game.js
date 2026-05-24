@@ -1,7 +1,6 @@
 
 const socket = io({ transports: ["websocket"] });
 
-
 const myUserId    = Number(window.__MY_USER_ID__) || null;
 let currentTurn = null;
 let myBalance   = null;
@@ -49,6 +48,7 @@ socket.on("GAME_STARTED", (data) => {
     showNotification("Игра началась!", "success");
     renderFullState(data);
     updateControls(data.currentPlayerId);
+    highlightCurrentPlayer(data.currentPlayerId);
 });
 
 socket.on("PLAYER_ACTION", (data) => {
@@ -103,6 +103,7 @@ socket.on("BETTING_PHASE", ({ deckShuffled }) => {
     if (deckShuffled) showNotification("Колода перетасована!", "info");
     showBettingUI();
     setControlsDisabled(true);
+    highlightCurrentPlayer(null);
 });
 
 socket.on("DECK_SHUFFLED", ({ remainingCards }) => {
@@ -264,9 +265,11 @@ function renderFullState(state) {
     if (state.status === "BETTING") {
         showBettingUI();
         setControlsDisabled(true);
+        highlightCurrentPlayer(null);
     } else {
         hideBettingUI();
         updateActionButtons(state);
+        highlightCurrentPlayer(state.currentPlayerId);
     }
 }
 
