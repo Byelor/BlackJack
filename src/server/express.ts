@@ -49,7 +49,8 @@ app.use(express.json());
 app.use("/api/lobby", checkForAuthAPIMiddleware.checkUser, roomsApiRouter);
 app.use("/api/authorization", authorizationApiRouter);
 
-// app.use("/", (req, res)=>{
-//     res.redirect("/main");
-// })  
+app.use("/", (req, res)=>{
+    res.redirect("/main");
+})  
+
 export default app;

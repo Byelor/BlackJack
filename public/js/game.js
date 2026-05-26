@@ -103,6 +103,7 @@ socket.on("BETTING_PHASE", ({ deckShuffled }) => {
     if (deckShuffled) showNotification("Колода перетасована!", "info");
     showBettingUI();
     setControlsDisabled(true);
+    updateBetButtonState(lastRoomState);
     highlightCurrentPlayer(null);
 });
 
@@ -215,6 +216,11 @@ function initGameButtons() {
     });
 
     document.getElementById("btn-bet")?.addEventListener("click", () => {
+        if (!canPlaceBet()) {
+            showNotification("Вы уже сделали ставку", "warning");
+            return;
+        }
+
         const input  = document.getElementById("bet-input");
         const amount = Number(input?.value ?? 0);
         if (amount <= 0) {
@@ -265,6 +271,7 @@ function renderFullState(state) {
     if (state.status === "BETTING") {
         showBettingUI();
         setControlsDisabled(true);
+        updateBetButtonState(state);
         highlightCurrentPlayer(null);
     } else {
         hideBettingUI();
@@ -325,6 +332,35 @@ function renderRoundResults(results) {
     `).join("");
     modal.style.display = "flex";
     setTimeout(() => { modal.style.display = "none"; }, 6000);
+}
+
+function hasPlacedBet(state = lastRoomState) {
+    if (!state || state.status !== "BETTING") return false;
+
+    const me = state.players?.find((p) => isMe(p.userId));
+    if (!me || !Array.isArray(me.hands)) return false;
+
+    return me.hands.some((hand) => Number(hand?.bet) > 0);
+}
+
+function canPlaceBet(state = lastRoomState) {
+    if (!state || state.status !== "BETTING") return false;
+    return !hasPlacedBet(state);
+}
+
+function updateBetButtonState(state = lastRoomState) {
+    const betButton = document.getElementById("btn-bet");
+    const betInput = document.getElementById("bet-input");
+    const chips = document.querySelectorAll(".chip");
+
+    const disabled = !canPlaceBet(state);
+    if (betButton) {
+        betButton.disabled = disabled;
+        betButton.textContent = disabled ? "Ставка уже сделана" : "Поставить";
+    }
+
+    if (betInput) betInput.disabled = disabled;
+    chips.forEach((chip) => { chip.disabled = disabled; });
 }
 
 function canSplit(hand) {

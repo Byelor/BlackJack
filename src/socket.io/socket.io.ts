@@ -64,6 +64,44 @@ async function handleNextTurn(roomId: string, userId: number) {
     }
 }
 
+async function emitGameStarted(roomId: string): Promise<void> {
+    const gameState = await engine.startGame(roomId);
+    io.to(roomId).emit("GAME_STARTED", gameState);
+
+    const firstPlayer = gameState.currentPlayerId;
+    if (firstPlayer !== null) {
+        const fp = gameState.players.find(p => p.userId === firstPlayer);
+        if (fp?.hands.every(h => h.status !== "ACTIVE")) {
+            await handleNextTurn(roomId, firstPlayer);
+        }
+        return;
+    }
+
+    const advance = await engine.isPlayerPhaseComplete(roomId);
+    if (advance) {
+        await handleNextTurn(roomId, advance.fromUserId);
+    }
+}
+
+async function startGameIfAllBetsPlaced(roomId: string): Promise<boolean> {
+    const game = await roomRepo.getRoomGame(roomId);
+    if (!game || game.status !== room_status.BETTING) return false;
+
+    const userIds = await roomRepo.getAllUsersFromRoom(roomId);
+    if (userIds.length === 0) return false;
+
+    const allStates = await roomRepo.getAllPlayersStates(roomId);
+    const allBetsPlaced = userIds.every((uid) => {
+        const state = allStates.get(Number(uid));
+        return Boolean(state?.hands[0]?.bet && state.hands[0].bet > 0);
+    });
+
+    if (!allBetsPlaced) return false;
+
+    await emitGameStarted(roomId);
+    return true;
+}
+
 io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>) => {
     const { userSession } = socket.data;
     if (!userSession) return;
@@ -129,8 +167,11 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
                 await roomService.removeUserFromCurrentRoom(userSession.userId);
                 
                 if (currentRoomId) {
-                    const state = await engine.buildRoomState(currentRoomId);
-                    io.to(currentRoomId).emit("ROOM_STATE", state);
+                    const gameStarted = await startGameIfAllBetsPlaced(currentRoomId);
+                    if (!gameStarted) {
+                        const state = await engine.buildRoomState(currentRoomId);
+                        io.to(currentRoomId).emit("ROOM_STATE", state);
+                    }
                 }
             } catch (err) {
                 console.error("[disconnect timeout error]", err);
@@ -188,21 +229,7 @@ io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEv
         });
 
         if (result.allBetsPlaced) {
-            const gameState = await engine.startGame(roomId);
-            io.to(roomId).emit("GAME_STARTED", gameState);
-
-            const firstPlayer = gameState.currentPlayerId;
-            if (firstPlayer !== null) {
-                const fp = gameState.players.find(p => p.userId === firstPlayer);
-                if (fp?.hands.every(h => h.status !== "ACTIVE")) {
-                    await handleNextTurn(roomId, firstPlayer);
-                }
-            } else {
-                const advance = await engine.isPlayerPhaseComplete(roomId);
-                if (advance) {
-                    await handleNextTurn(roomId, advance.fromUserId);
-                }
-            }
+            await emitGameStarted(roomId);
         }
     });
 
@@ -340,8 +367,15 @@ async function handleLeave(
         } catch {  }
 
         socket.to(currentRoomId).emit("PLAYER_LEFT", { userId: userSession.userId });
+        await roomService.removeUserFromRoom(currentRoomId, userSession.userId);
         socket.leave(currentRoomId);
         socket.data.currentRoomId = null;
+
+        const gameStarted = await startGameIfAllBetsPlaced(currentRoomId);
+        if (!gameStarted) {
+            const state = await engine.buildRoomState(currentRoomId);
+            io.to(currentRoomId).emit("ROOM_STATE", state);
+        }
     }
 }
 

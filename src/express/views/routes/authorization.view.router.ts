@@ -11,6 +11,9 @@ class AuthorizationViewRouter{
     initialRoutes(){
         this.router.get("/login", AuthorizationViewController.renderLoginPage);
         this.router.get("/register", AuthorizationViewController.renderRegistrationPage);
+        this.router.get("/", (req, res)=>{
+            res.redirect("/login");
+        })
     }
 }
 export default new AuthorizationViewRouter().router;

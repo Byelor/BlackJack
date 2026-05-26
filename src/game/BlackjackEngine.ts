@@ -205,6 +205,9 @@ class BlackjackEngine {
         if (!session || session.balance < amount) return null;
 
         const ps = await roomRepo.getPlayerState(roomId, userId) ?? { hands: [], currentHandIndex: 0 };
+        const alreadyBet = ps.hands.some((hand) => hand.bet > 0);
+        if (alreadyBet) return null;
+
         ps.hands = [{ bet: amount, cards: [], status: hand_status.ACTIVE }];
         await roomRepo.setPlayerState(roomId, userId, ps.hands, 0);
 
