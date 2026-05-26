@@ -4,10 +4,7 @@ import userService from "../../services/user.service.js";
 import roomService from "../../services/room.service.js";
 
 class AuthorizationApiController{
-    /**
-     * Выкидывает пользователя из Socket.IO и его текущей Redis-комнаты.
-     * Вызывается при логине/регистрации с тем же аккаунтом (TODO стр. 44-47).
-     */
+
     private kickFromRoom = async (userId: number, reason: string = "Выполнен вход с другого устройства") => {
         try {
             const { socketio } = await import("../../../server/server.js");
