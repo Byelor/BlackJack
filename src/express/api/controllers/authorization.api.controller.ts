@@ -27,9 +27,10 @@ class AuthorizationApiController{
             res.status(400).json({ message: "Пустые значения для identifier или password" });
             return;
         }
+        
         const userSession = await userService.authenticate(identifier, password);
         if (!userSession) {
-            res.status(404).json({ message: "Неверный логин или пароль" });
+            res.status(401).json({ message: "Неверный логин или пароль" });
             return;
         }
         // Кик старой сессии

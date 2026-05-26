@@ -32,7 +32,6 @@ class UserService{
         const {hpassword, ...userSession} = user;
         return userSession as UserSession;
     }
-    
     addUser = async (name: string, email: string, password: string)=>{
         if(await userPgRepository.isUserCreated(name) || await userPgRepository.isUserCreated(email))
         {

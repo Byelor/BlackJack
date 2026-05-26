@@ -1,0 +1,1459 @@
+ПРИЛОЖЕНИЕ. ПРОТОТИПЫ ОСНОВНЫХ ФУНКЦИЙ И МЕТОДОВ ПРОГРАММЫ
+
+Проект представляет собой серверную часть веб-приложения для игры в Blackjack. Приложение реализовано на TypeScript/Node.js с использованием Express, Socket.IO, Redis и PostgreSQL. Ниже приведены прототипы основных функций, методов и обработчиков без тел реализаций. Комментарии поясняют назначение каждого элемента программы.
+
+================================================================================
+1. ТОЧКА ВХОДА И НАСТРОЙКА СЕРВЕРА
+================================================================================
+
+Файл: src/index.ts
+
+/**
+ * Выполняет запуск приложения: подключается к Redis, очищает временные игровые комнаты
+ * и запускает HTTP-сервер на заданном порту.
+ */
+const bootstrap = async (): Promise<void>;
+
+
+Файл: src/server/express.ts
+
+/**
+ * Экземпляр Express-приложения. Настраивает статические файлы, шаблонизатор,
+ * cookie-parser, middleware авторизации, маршруты страниц и API.
+ */
+const app: Express;
+
+
+/**
+ * Обработчик маршрута по умолчанию. Перенаправляет пользователя на главную страницу.
+ */
+app.use("/", (req: Request, res: Response) => void);
+
+
+Файл: src/server/server.ts
+
+/**
+ * HTTP-сервер, созданный на основе Express-приложения.
+ */
+const server: http.Server;
+
+
+/**
+ * Экземпляр Socket.IO-сервера для обмена игровыми событиями в реальном времени.
+ */
+const socketio: Server;
+
+
+/**
+ * Обработчик нового Socket.IO-подключения. Проверяет наличие sessionToken в cookie.
+ */
+socketio.on("connection", async (socket: Socket) => void);
+
+
+================================================================================
+2. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И КОНФИГУРАЦИЯ
+================================================================================
+
+Файл: src/express/support/cryptoGenerator.ts
+
+/**
+ * Генерирует случайный токен сессии заданной длины.
+ */
+generateSessionToken = (length: number) => string;
+
+
+Файл: src/express/support/setCookie.support.ts
+
+/**
+ * Устанавливает cookie с токеном сессии и перенаправляет пользователя на главную страницу.
+ */
+const setCookie = async (req: Request, res: Response) => Promise<void>;
+
+
+Файл: handlebars_helpers/isAuth.ts
+
+/**
+ * Регистрирует Handlebars-хелпер isAuth, который отображает блок шаблона
+ * в зависимости от наличия пользовательской сессии.
+ */
+export const isAuth = (hbsInstance: any) => void;
+
+
+/**
+ * Проверяет наличие сессии пользователя внутри Handlebars-шаблона.
+ */
+hbsInstance.registerHelper("isAuth", function (
+    this: any,
+    userSession: UserSession,
+    options: any
+) => any);
+
+
+Файл: handlebars_helpers/registerHelpers.ts
+
+/**
+ * Регистрирует все пользовательские Handlebars-хелперы приложения.
+ */
+export default (hbsInstance: any) => void;
+
+
+================================================================================
+3. МОДЕЛИ ДАННЫХ
+================================================================================
+
+Файл: src/express/models/user.dto.ts
+
+/**
+ * Описывает полную модель пользователя, включая хэш пароля.
+ */
+interface User {
+    name: string;
+    email: string;
+    userId: number;
+    balance: number;
+    hpassword: string;
+}
+
+
+Файл: src/express/models/userSession.dto.ts
+
+/**
+ * Описывает данные пользователя, сохраняемые в сессии без пароля.
+ */
+interface UserSession {
+    name: string;
+    email: string;
+    userId: number;
+    balance: number;
+}
+
+
+Файл: src/express/models/room.meta.dto.ts
+
+/**
+ * Описывает метаданные игровой комнаты: название, описание, вместимость,
+ * приватность, пароль и количество колод.
+ */
+interface RoomMeta {
+    roomId: string;
+    name: string;
+    description: string;
+    maxPlayersCount: number;
+    currentPlayersCount: number;
+    isPrivate: boolean;
+    password: string;
+    deckCount: number;
+}
+
+
+Файл: src/express/models/room.dto.ts
+
+/**
+ * Перечисление статусов комнаты.
+ */
+enum room_status {
+    PLAYING = "PLAYING",
+    BETTING = "BETTING",
+}
+
+
+/**
+ * Описывает текущее игровое состояние комнаты.
+ */
+interface Room {
+    roomId: string;
+    dealer: string[];
+    status: room_status;
+    currentPlayer: number | null;
+    deck: string[];
+    reshufflePending: boolean;
+    playerOrder: number[];
+}
+
+
+Файл: src/express/models/hand.dto.ts
+
+/**
+ * Перечисление возможных статусов руки игрока.
+ */
+enum hand_status {
+    ACTIVE = "ACTIVE",
+    STOOD = "STOOD",
+    DOUBLE = "DOUBLE-HIT",
+    SURRENDER = "SURRENDER",
+    BUST = "BUST",
+    BLACKJACK = "BLACKJACK",
+}
+
+
+/**
+ * Описывает одну руку игрока: ставку, карты и текущий статус.
+ */
+interface Hand {
+    bet: number;
+    cards: string[];
+    status: hand_status;
+}
+
+
+Файл: src/express/models/player.dto.ts
+
+/**
+ * Описывает состояние игрока в комнате: активную руку и список всех рук.
+ */
+interface Player {
+    currentHandIndex: 0;
+    hands: Hand[];
+}
+
+
+================================================================================
+4. MIDDLEWARE
+================================================================================
+
+Файл: src/express/middlewares/authentification.middleware.ts
+
+/**
+ * Проверяет cookie sessionToken, получает сессию пользователя из Redis
+ * и записывает ее в req.userSession.
+ */
+checkUserByCookie = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+Файл: src/express/middlewares/checkForAuthAPI.middleware.ts
+
+/**
+ * Защищает API-маршруты от неавторизованных пользователей.
+ */
+checkUser = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+Файл: src/express/middlewares/checkForAuthentification.middleware.ts
+
+/**
+ * Проверяет авторизацию пользователя при переходе на защищенные страницы.
+ * При отсутствии сессии перенаправляет на страницу регистрации.
+ */
+checkUser = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+Файл: src/express/middlewares/checkForUserInRoom.middleware.ts
+
+/**
+ * Проверяет, что пользователь действительно состоит в комнате,
+ * указанной в параметрах маршрута.
+ */
+checkUser = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+Файл: src/express/middlewares/refreshCookie.middleware.ts
+
+/**
+ * Продлевает срок действия пользовательской сессии и cookie sessionToken.
+ */
+refreshSession = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+================================================================================
+5. КОНТРОЛЛЕРЫ API
+================================================================================
+
+Файл: src/express/api/controllers/authorization.api.controller.ts
+
+/**
+ * Принудительно отключает предыдущие сокеты пользователя и удаляет его из текущей комнаты.
+ * Используется при повторном входе или выходе из аккаунта.
+ */
+private kickFromRoom = async (
+    userId: number,
+    reason: string = "Выполнен вход с другого устройства"
+) => Promise<void>;
+
+
+/**
+ * Выполняет вход пользователя: проверяет логин/почту и пароль,
+ * создает сессию и возвращает sessionToken.
+ */
+login = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+/**
+ * Регистрирует нового пользователя, создает для него сессию
+ * и возвращает token для авторизации.
+ */
+register = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+/**
+ * Выполняет выход из аккаунта: удаляет сессию, очищает комнату
+ * и отключает активные сокеты пользователя.
+ */
+logout = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+Файл: src/express/api/controllers/room.api.controller.ts
+
+/**
+ * Создает новую игровую комнату для авторизованного пользователя.
+ */
+createRoom = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+/**
+ * Возвращает список всех активных комнат с их метаданными.
+ */
+getAllRooms = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+/**
+ * Добавляет пользователя в выбранную комнату с учетом пароля и ограничения по игрокам.
+ */
+enterRoom = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+/**
+ * Удаляет пользователя из текущей комнаты.
+ */
+leaveRoom = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+/**
+ * Удаляет комнату, если она существует и в ней нет игроков.
+ */
+deleteRoom = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+================================================================================
+6. КОНТРОЛЛЕРЫ СТРАНИЦ
+================================================================================
+
+Файл: src/express/views/controllers/authorization.view.controller.ts
+
+/**
+ * Отображает страницу входа пользователя.
+ */
+renderLoginPage = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+/**
+ * Отображает страницу регистрации пользователя.
+ */
+renderRegistrationPage = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+Файл: src/express/views/controllers/main.view.controller.ts
+
+/**
+ * Отображает главную страницу приложения.
+ */
+renderPage = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+Файл: src/express/views/controllers/room.view.controller.ts
+
+/**
+ * Отображает страницу со списком доступных игровых комнат.
+ */
+RenderRoomsPage = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+/**
+ * Отображает страницу конкретной игровой комнаты.
+ */
+RenderRoomPage = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<void>;
+
+
+================================================================================
+7. МАРШРУТИЗАТОРЫ
+================================================================================
+
+Файл: src/express/api/routers/authorization.api.router.ts
+
+/**
+ * Инициализирует API-маршруты авторизации: login, register и logout.
+ */
+initialRoutes() => void;
+
+
+Файл: src/express/api/routers/rooms.api.router.ts
+
+/**
+ * Инициализирует API-маршруты для создания, получения, входа,
+ * выхода и удаления игровых комнат.
+ */
+initialRoutes() => void;
+
+
+Файл: src/express/views/routes/authorization.view.router.ts
+
+/**
+ * Инициализирует маршруты страниц входа и регистрации.
+ */
+initialRoutes() => void;
+
+
+Файл: src/express/views/routes/main.view.router.ts
+
+/**
+ * Инициализирует маршрут главной страницы.
+ */
+initialRoutes() => void;
+
+
+Файл: src/express/views/routes/room.view.router.ts
+
+/**
+ * Инициализирует маршруты списка комнат и страницы отдельной комнаты.
+ */
+initialRoutes() => void;
+
+
+================================================================================
+8. СЕРВИСЫ
+================================================================================
+
+Файл: src/express/services/user.service.ts
+
+/**
+ * Сравнивает введенный пароль с сохраненным паролем пользователя.
+ */
+function compare(str1: string, str2: string) => boolean;
+
+
+/**
+ * Получает пользователя из базы данных по идентификатору.
+ */
+getUserById = async (userId: number) => Promise<User | null>;
+
+
+/**
+ * Создает нового пользователя в базе данных.
+ */
+setNewUser = async (user: User) => Promise<number>;
+
+
+/**
+ * Получает пользователя по адресу электронной почты.
+ */
+getUserByEmail = async (email: string) => Promise<User | null>;
+
+
+/**
+ * Выполняет аутентификацию пользователя по имени/почте и паролю.
+ * Возвращает данные сессии без пароля.
+ */
+authenticate = async (
+    identifier: string,
+    password: string
+) => Promise<UserSession | null>;
+
+
+/**
+ * Регистрирует нового пользователя, проверяя уникальность имени и почты.
+ */
+addUser = async (
+    name: string,
+    email: string,
+    password: string
+) => Promise<UserSession | null>;
+
+
+Файл: src/express/services/userSession.service.ts
+
+/**
+ * Создает новую пользовательскую сессию и генерирует token.
+ */
+setSession = async (userSession: UserSession) => Promise<string>;
+
+
+/**
+ * Получает данные пользовательской сессии по token.
+ */
+getUserSessionByToken = async (
+    sessionToken: string
+) => Promise<UserSession | null>;
+
+
+/**
+ * Удаляет пользовательскую сессию по token.
+ */
+removeSessionByToken = async (
+    sessionToken: string
+) => Promise<string | null>;
+
+
+/**
+ * Продлевает срок действия сессии по token.
+ */
+refreshSessionByToken = async (
+    sessionToken: string
+) => Promise<string | null>;
+
+
+Файл: src/express/services/room.service.ts
+
+/**
+ * Возвращает количество игроков в комнате.
+ */
+getPlayersCount = async (roomId: string) => Promise<number>;
+
+
+/**
+ * Возвращает метаданные всех активных комнат.
+ */
+getAllRoomsMeta = async () => Promise<RoomMeta[] | null>;
+
+
+/**
+ * Создает комнату с переданными метаданными.
+ */
+createRoom = async (
+    roomId: string,
+    userId: number,
+    roomMeta: RoomMeta
+) => Promise<string>;
+
+
+/**
+ * Создает новую комнату для пользователя с валидацией входных данных.
+ */
+createRoomForUser = async (
+    userId: number,
+    input: CreateRoomInput
+) => Promise<{ roomId: string } | { error: string }>;
+
+
+/**
+ * Удаляет комнату по идентификатору.
+ */
+deleteRoom = async (roomId: string) => Promise<string>;
+
+
+/**
+ * Удаляет комнату только в том случае, если она пуста.
+ */
+deleteEmptyRoom = async (roomId: string) => Promise<boolean>;
+
+
+/**
+ * Добавляет пользователя в комнату, проверяя пароль и свободные места.
+ */
+addUserToRoom = async (
+    roomId: string,
+    userId: number,
+    password: string | null = null
+) => Promise<string | null>;
+
+
+/**
+ * Удаляет пользователя из указанной комнаты.
+ */
+removeUserFromRoom = async (
+    roomId: string,
+    userId: number
+) => Promise<string>;
+
+
+/**
+ * Получает метаданные комнаты.
+ */
+getRoomMeta = async (roomId: string) => Promise<RoomMeta | null>;
+
+
+/**
+ * Удаляет пользователя из его текущей комнаты.
+ */
+removeUserFromCurrentRoom = async (
+    userId: number
+) => Promise<string | null>;
+
+
+/**
+ * Возвращает список идентификаторов пользователей в комнате.
+ */
+getAllUsersFromRoom = async (
+    roomId: string
+) => Promise<string[]>;
+
+
+================================================================================
+9. РЕПОЗИТОРИИ
+================================================================================
+
+Файл: src/express/repositories/user.pg.repository.ts
+
+/**
+ * Получает пользователя PostgreSQL по идентификатору.
+ */
+getUserById = async (userId: number) => Promise<User | null>;
+
+
+/**
+ * Сохраняет нового пользователя в PostgreSQL.
+ */
+setUser = async (user: User) => Promise<number>;
+
+
+/**
+ * Получает пользователя по email.
+ */
+getUserByEmail = async (email: string) => Promise<User | null>;
+
+
+/**
+ * Получает пользователя по имени.
+ */
+getUserByName = async (name: string) => Promise<User | null>;
+
+
+/**
+ * Получает пользователя по имени или email.
+ */
+getUserByEmailOrName = async (
+    nameOrEmail: string
+) => Promise<User | null>;
+
+
+/**
+ * Проверяет, существует ли пользователь с указанным именем или email.
+ */
+isUserCreated = async (identifier: string) => Promise<boolean>;
+
+
+/**
+ * Обновляет баланс пользователя в PostgreSQL.
+ */
+updateBalance = async (
+    userId: number,
+    newBalance: number
+) => Promise<void>;
+
+
+Файл: src/express/repositories/userSession.redis.repository.ts
+
+/**
+ * Получает данные сессии пользователя из Redis по token.
+ */
+getUserSessionByToken = async (
+    sessionToken: string
+) => Promise<UserSession | null>;
+
+
+/**
+ * Создает новую сессию в Redis и задает время ее жизни.
+ */
+setSession = async (
+    session: UserSession,
+    generatedToken: string,
+    expirationTime: number
+) => Promise<string>;
+
+
+/**
+ * Удаляет сессию пользователя по userId.
+ */
+deleteSessionByUserId = async (
+    userId: number
+) => Promise<string | null>;
+
+
+/**
+ * Удаляет сессию по sessionToken.
+ */
+deleteSessionBySessionToken = async (
+    sessionToken: string
+) => Promise<string | null>;
+
+
+/**
+ * Получает sessionToken пользователя по userId.
+ */
+getSessionByUserId = async (
+    userId: number
+) => Promise<string | null>;
+
+
+/**
+ * Продлевает срок действия сессии в Redis.
+ */
+refreshSessionByToken = async (
+    sessionToken: string,
+    expirationTime: number
+) => Promise<string | null>;
+
+
+Файл: src/express/repositories/room.redis.repository.ts
+
+/**
+ * Возвращает количество игроков в комнате.
+ */
+getPlayersCount = async (roomId: string) => Promise<number>;
+
+
+/**
+ * Возвращает идентификаторы всех активных комнат.
+ */
+getActiveRoomIds = async () => Promise<string[] | null>;
+
+
+/**
+ * Возвращает метаданные всех активных комнат.
+ */
+getRoomMetas = async () => Promise<RoomMeta[] | null>;
+
+
+/**
+ * Возвращает метаданные одной комнаты.
+ */
+getRoomMeta = async (roomId: string) => Promise<RoomMeta | null>;
+
+
+/**
+ * Удаляет все игровые комнаты и связанные с ними Redis-ключи.
+ */
+deleteAllRooms = async () => Promise<number>;
+
+
+/**
+ * Получает идентификатор текущей комнаты пользователя.
+ */
+getUserCurrentRoomId = async (
+    userId: number
+) => Promise<string | null>;
+
+
+/**
+ * Возвращает список пользователей указанной комнаты.
+ */
+getAllUsersFromRoom = async (
+    roomId: string
+) => Promise<string[]>;
+
+
+/**
+ * Возвращает список пользователей комнаты.
+ */
+getRoomUsers = async (roomId: string) => Promise<string[]>;
+
+
+/**
+ * Создает комнату и записывает ее начальное состояние в Redis.
+ */
+createRoom = async (
+    roomId: string,
+    userId: number,
+    roomMeta: RoomMeta
+) => Promise<string>;
+
+
+/**
+ * Удаляет комнату и связанные с ней данные игроков.
+ */
+deleteRoom = async (roomId: string) => Promise<string>;
+
+
+/**
+ * Удаляет комнату только при отсутствии игроков.
+ */
+deleteRoomIfEmpty = async (
+    roomId: string
+) => Promise<boolean>;
+
+
+/**
+ * Добавляет пользователя в комнату и обновляет связь userId-roomId.
+ */
+addUserToRoom = async (
+    roomId: string,
+    userId: number
+) => Promise<string | null>;
+
+
+/**
+ * Удаляет пользователя из указанной комнаты.
+ */
+removeUserFromRoom = async (
+    roomId: string,
+    userId: number
+) => Promise<string>;
+
+
+/**
+ * Удаляет пользователя из текущей комнаты.
+ */
+removeUserFromCurrentRoom = async (
+    userId: number
+) => Promise<string | null>;
+
+
+/**
+ * Получает текущее игровое состояние комнаты.
+ */
+getRoomGame = async (
+    roomId: string
+) => Promise<Room | null>;
+
+
+/**
+ * Частично обновляет поля игрового состояния комнаты.
+ */
+setRoomGameFields = async (
+    roomId: string,
+    fields: Record<string, string>
+) => Promise<void>;
+
+
+/**
+ * Получает состояние конкретного игрока в комнате.
+ */
+getPlayerState = async (
+    roomId: string,
+    userId: number
+) => Promise<{ hands: Hand[]; currentHandIndex: number } | null>;
+
+
+/**
+ * Сохраняет состояние игрока: руки и индекс текущей руки.
+ */
+setPlayerState = async (
+    roomId: string,
+    userId: number,
+    hands: Hand[],
+    currentHandIndex: number
+) => Promise<void>;
+
+
+/**
+ * Получает количество колод, заданное в настройках комнаты.
+ */
+getDeckCount = async (roomId: string) => Promise<number>;
+
+
+/**
+ * Получает состояния всех игроков в комнате.
+ */
+getAllPlayersStates = async (
+    roomId: string
+) => Promise<Map<number, { hands: Hand[]; currentHandIndex: number }>>;
+
+
+================================================================================
+10. ИГРОВОЙ ДВИЖОК BLACKJACK
+================================================================================
+
+Файл: src/game/BlackjackEngine.ts
+
+/**
+ * Возвращает числовое значение карты по правилам Blackjack.
+ */
+export function cardValue(card: string): number;
+
+
+/**
+ * Возвращает ранг карты без учета масти.
+ */
+export function cardRank(card: string): string;
+
+
+/**
+ * Подсчитывает сумму карт в руке с учетом особенностей туза.
+ */
+export function countHand(cards: string[]): number;
+
+
+/**
+ * Генерирует колоду или несколько колод карт.
+ */
+export function generateDeck(deckCount: number): string[];
+
+
+/**
+ * Перемешивает колоду карт.
+ */
+export function shuffleDeck(deck: string[]): void;
+
+
+/**
+ * Проверяет, нужно ли выполнить перетасовку колоды.
+ */
+export function shouldReshuffle(deck: string[]): boolean;
+
+
+/**
+ * Проверяет возможность разделить руку на две.
+ */
+export function canSplit(hand: Hand): boolean;
+
+
+/**
+ * Проверяет возможность удвоить ставку.
+ */
+export function canDouble(hand: Hand): boolean;
+
+
+/**
+ * Проверяет, завершена ли рука игрока.
+ */
+function isHandDone(hand: Hand): boolean;
+
+
+/**
+ * Проверяет наличие натурального Blackjack из двух карт.
+ */
+export function isNaturalBlackjack(cards: string[]): boolean;
+
+
+/**
+ * Определяет результат отдельной руки игрока относительно карт дилера.
+ */
+function resolveHand(
+    hand: Hand,
+    dealerCards: string[],
+    dealerScore: number,
+    dealerBust: boolean
+) => { result: RoundResult; payout: number };
+
+
+/**
+ * Формирует общий результат игрока по всем его рукам.
+ */
+function summarizePlayerResult(
+    handResults: RoundResult[],
+    totalPayout: number,
+    totalWagered: number
+) => RoundResult;
+
+
+/**
+ * Преобразует внутреннюю модель руки в состояние, отправляемое клиенту.
+ */
+function toHandState(hand: Hand): HandState;
+
+
+/**
+ * Пополняет колоду, если в ней закончились карты.
+ */
+private refillDeck = async (
+    roomId: string,
+    deck: string[]
+) => Promise<void>;
+
+
+/**
+ * Извлекает верхнюю карту из колоды и отмечает необходимость будущей перетасовки.
+ */
+private popCard = async (
+    roomId: string,
+    deck: string[]
+) => Promise<string>;
+
+
+/**
+ * Формирует полное состояние комнаты для отправки клиентам.
+ */
+buildRoomState = async (
+    roomId: string,
+    revealDealer = false
+) => Promise<RoomState>;
+
+
+/**
+ * Размещает ставку игрока и списывает средства с баланса.
+ */
+placeBet = async (
+    roomId: string,
+    userId: number,
+    amount: number
+) => Promise<{ newBalance: number; allBetsPlaced: boolean } | null>;
+
+
+/**
+ * Запускает игровой раунд: готовит колоду, раздает карты и назначает первого игрока.
+ */
+startGame = async (
+    roomId: string
+) => Promise<RoomState>;
+
+
+/**
+ * Выполняет действие HIT: игрок берет дополнительную карту.
+ */
+playerHit = async (
+    roomId: string,
+    userId: number
+) => Promise<{ hands: HandState[]; currentHandIndex: number } | null>;
+
+
+/**
+ * Выполняет действие STAND: игрок завершает ход текущей руки.
+ */
+playerStand = async (
+    roomId: string,
+    userId: number
+) => Promise<{ hands: HandState[]; currentHandIndex: number } | null>;
+
+
+/**
+ * Выполняет действие DOUBLE: удваивает ставку, выдает одну карту и завершает руку.
+ */
+playerDouble = async (
+    roomId: string,
+    userId: number
+) => Promise<{ hands: HandState[]; currentHandIndex: number; balanceDeducted: number } | null>;
+
+
+/**
+ * Выполняет действие SPLIT: разделяет две одинаковые карты на две отдельные руки.
+ */
+playerSplit = async (
+    roomId: string,
+    userId: number
+) => Promise<{ hands: HandState[]; currentHandIndex: number; balanceDeducted: number } | null>;
+
+
+/**
+ * Выполняет действие SURRENDER: игрок сдается и получает половину ставки обратно.
+ */
+playerSurrender = async (
+    roomId: string,
+    userId: number
+) => Promise<{ hands: HandState[]; currentHandIndex: number; returned: number } | null>;
+
+
+/**
+ * Передает ход следующей активной руке или следующему игроку.
+ * Если активных игроков нет, переводит игру к ходу дилера.
+ */
+nextTurn = async (
+    roomId: string,
+    currentUserId: number
+) => Promise<
+    | { nextUserId: number; currentHandIndex: number }
+    | { dealerPlaying: true }
+    | { roundOver: true; result: Awaited<ReturnType<BlackjackEngine["settleRound"]>> }
+>;
+
+
+/**
+ * Проверяет, завершили ли все игроки свои действия в текущем раунде.
+ */
+isPlayerPhaseComplete = async (
+    roomId: string
+) => Promise<{ fromUserId: number } | null>;
+
+
+/**
+ * Выполняет ход дилера: берет карты, пока сумма меньше 17.
+ */
+playDealer = async (
+    roomId: string
+) => Promise<{ cards: string[]; score: number }>;
+
+
+/**
+ * Подводит итоги раунда, рассчитывает выигрыши и обновляет балансы игроков.
+ */
+settleRound = async (
+    roomId: string
+) => Promise<{
+    results: RoundResultEntry[];
+    dealerCards: string[];
+    dealerScore: number;
+    reshuffled: boolean;
+}>;
+
+
+/**
+ * Сбрасывает состояние раунда и переводит комнату в фазу ставок.
+ */
+resetRound = async (
+    roomId: string
+) => Promise<void>;
+
+
+/**
+ * Завершает активные руки игрока при выходе или потере соединения.
+ */
+forfeitPlayer = async (
+    roomId: string,
+    userId: number
+) => Promise<void>;
+
+
+================================================================================
+11. SOCKET.IO: АВТОРИЗАЦИЯ И ИГРОВЫЕ СОБЫТИЯ
+================================================================================
+
+Файл: src/socket.io/socket.middleware.ts
+
+/**
+ * Авторизует Socket.IO-подключение по sessionToken из cookie.
+ */
+export const authenticateSocket = async (
+    socket: SocketWithData,
+    next: (err?: Error) => void
+) => Promise<void>;
+
+
+/**
+ * Проверяет актуальность сессии перед обработкой socket-событий.
+ */
+export const guardSession = async (
+    socket: SocketWithData,
+    next: (err?: Error) => void
+) => Promise<void>;
+
+
+Файл: src/socket.io/socket.io.ts
+
+/**
+ * Получает актуальный баланс игрока по userId.
+ */
+async function getPlayerBalance(userId: number): Promise<number>;
+
+
+/**
+ * Обрабатывает переход хода к следующему игроку, запуск дилера и завершение раунда.
+ */
+async function handleNextTurn(
+    roomId: string,
+    userId: number
+): Promise<void>;
+
+
+/**
+ * Запускает игру и рассылает событие GAME_STARTED всем клиентам комнаты.
+ */
+async function emitGameStarted(roomId: string): Promise<void>;
+
+
+/**
+ * Проверяет, сделали ли ставки все игроки, и запускает игру при выполнении условия.
+ */
+async function startGameIfAllBetsPlaced(
+    roomId: string
+): Promise<boolean>;
+
+
+/**
+ * Обработчик подключения клиента к Socket.IO.
+ */
+io.on("connection", async (
+    socket: Socket<ClientToServerEvents, ServerToClientEvents, {}, SocketData>
+) => Promise<void>);
+
+
+/**
+ * Обработчик входа пользователя в socket-комнату.
+ */
+socket.on("ROOM_JOIN", async (
+    data: { roomId: string }
+) => Promise<void>);
+
+
+/**
+ * Обработчик выхода пользователя из комнаты.
+ */
+socket.on("ROOM_LEAVE", async () => Promise<void>);
+
+
+/**
+ * Обработчик отключения пользователя от Socket.IO.
+ */
+socket.on("disconnect", async () => Promise<void>);
+
+
+/**
+ * Обработчик запроса актуального состояния комнаты.
+ */
+socket.on("GET_ROOM_STATE", async (
+    payload?: { roomId?: string },
+    ack?: (response: { ok: boolean; message?: string }) => void
+) => Promise<void>);
+
+
+/**
+ * Обработчик размещения ставки игроком.
+ */
+socket.on("PLACE_BET", async (
+    data: { roomId: string; amount: number }
+) => Promise<void>);
+
+
+/**
+ * Обработчик действия HIT.
+ */
+socket.on("HIT", async (
+    data: { roomId: string }
+) => Promise<void>);
+
+
+/**
+ * Обработчик действия STAND.
+ */
+socket.on("STAND", async (
+    data: { roomId: string }
+) => Promise<void>);
+
+
+/**
+ * Обработчик действия DOUBLE.
+ */
+socket.on("DOUBLE", async (
+    data: { roomId: string }
+) => Promise<void>);
+
+
+/**
+ * Обработчик действия SPLIT.
+ */
+socket.on("SPLIT", async (
+    data: { roomId: string }
+) => Promise<void>);
+
+
+/**
+ * Обработчик действия SURRENDER.
+ */
+socket.on("SURRENDER", async (
+    data: { roomId: string }
+) => Promise<void>);
+
+
+/**
+ * Обработчик отправки сообщения в чат комнаты.
+ */
+socket.on("CHAT_MESSAGE", async (
+    data: { roomId: string; text: string }
+) => Promise<void>);
+
+
+================================================================================
+12. ТИПЫ SOCKET.IO-СОБЫТИЙ
+================================================================================
+
+Файл: src/socket.io/socket.types.ts
+
+/**
+ * Состояние одной руки игрока, передаваемое клиенту.
+ */
+interface HandState {
+    bet: number;
+    cards: string[];
+    status: HandStatus;
+    score: number;
+}
+
+
+/**
+ * Состояние игрока в игровой комнате.
+ */
+interface PlayerState {
+    userId: number;
+    name: string;
+    balance: number;
+    currentHandIndex: number;
+    hands: HandState[];
+}
+
+
+/**
+ * Полное состояние игровой комнаты.
+ */
+interface RoomState {
+    roomId: string;
+    status: RoomStatus;
+    currentPlayerId: number | null;
+    dealer: {
+        cards: string[];
+        score: number;
+    };
+    players: PlayerState[];
+    deckRemaining: number;
+}
+
+
+/**
+ * Событие игрового действия игрока.
+ */
+interface PlayerActionEvent {
+    userId: number;
+    action: "HIT" | "STAND" | "DOUBLE" | "SPLIT" | "SURRENDER";
+    hands: HandState[];
+    currentHandIndex: number;
+    balance?: number;
+}
+
+
+/**
+ * Результат раунда для одного игрока.
+ */
+interface RoundResultEntry {
+    userId: number;
+    name: string;
+    result: RoundResult;
+    payout: number;
+    netProfit: number;
+    newBalance: number;
+    hands: HandState[];
+}
+
+
+/**
+ * Итоговое событие завершения раунда.
+ */
+interface RoundResultEvent {
+    results: RoundResultEntry[];
+    dealer: {
+        cards: string[];
+        score: number;
+    };
+}
+
+
+/**
+ * Описывает события, которые клиент может отправлять серверу.
+ */
+interface ClientToServerEvents;
+
+
+/**
+ * Описывает события, которые сервер может отправлять клиенту.
+ */
+interface ServerToClientEvents;
+
+
+/**
+ * Дополнительные данные, хранящиеся внутри socket.data.
+ */
+interface SocketData {
+    userSession: UserSession | null;
+    sessionToken: string | null;
+    currentRoomId: string | null;
+}
+
+
+================================================================================
+13. ТЕСТЫ ЧИСТЫХ ФУНКЦИЙ
+================================================================================
+
+Файл: src/test.ts
+
+/**
+ * Проверяет корректность определения значения карт.
+ */
+test("1. cardValue returns correct value for cards", () => void);
+
+
+/**
+ * Проверяет подсчет стандартных комбинаций карт.
+ */
+test("2. countHand calculates standard hands correctly", () => void);
+
+
+/**
+ * Проверяет корректную обработку тузов как 1 или 11 очков.
+ */
+test("3. countHand handles Aces correctly (soft/hard)", () => void);
+
+
+/**
+ * Проверяет, что скрытая карта дилера не учитывается в сумме.
+ */
+test("4. countHand ignores hidden cards ('??')", () => void);
+
+
+/**
+ * Проверяет определение натурального Blackjack.
+ */
+test("5. isNaturalBlackjack identifies 21 with 2 cards", () => void);
+
+
+/**
+ * Проверяет возможность разделения пары карт.
+ */
+test("6. canSplit checks if two cards have the same rank", () => void);
+
+
+/**
+ * Проверяет возможность удвоения ставки только на двух картах.
+ */
+test("7. canDouble is true only for exactly 2 cards", () => void);
+
+
+/**
+ * Проверяет генерацию нужного количества карт в колоде.
+ */
+test("8. generateDeck creates correct number of cards", () => void);
