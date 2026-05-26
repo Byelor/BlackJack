@@ -1,9 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
-import userSessionService from "../../services/userSession.service.js";
-import userService from "../../services/user.service.js";
+
+
+
 import roomService from "../../services/room.service.js";
-import type { Room } from "../../models/room.dto.js";
+import engine from "../../../game/BlackjackEngine.js";
+import roomRepo from "../../repositories/room.redis.repository.js";
+
 import type { RoomMeta } from "../../models/room.meta.dto.js";
+
 class RoomsApiController{
     createRoom = async (req: Request, res: Response, next: NextFunction) => {
         if (!req.userSession) {
@@ -66,6 +70,30 @@ class RoomsApiController{
         
         res.json({message: "all good"});
     }
+
+    private notifyRoomUserLeft = async (roomId: string, userId: number) => {
+        try {
+            const { socketio } = await import("../../../server/server.js");
+            socketio.to(roomId).emit("PLAYER_LEFT", { userId });
+
+            const sockets = await socketio.fetchSockets();
+            for (const socket of sockets) {
+                if ((socket.data as any)?.userSession?.userId === userId) {
+                    socket.leave(roomId);
+                    (socket.data as any).currentRoomId = null;
+                }
+            }
+
+            const game = await roomRepo.getRoomGame(roomId);
+            if (!game) return;
+
+            const state = await engine.buildRoomState(roomId);
+            socketio.to(roomId).emit("ROOM_STATE", state);
+        } catch (err) {
+            console.error("[room leave notify error]", err);
+        }
+    };
+
     leaveRoom = async (req: Request, res: Response, next: NextFunction)=>{
         if(!req.userSession){
             res.json({"message": "not logined"});
@@ -78,6 +106,8 @@ class RoomsApiController{
             res.json({message: "you out from any room!"});
             return;
         }
+
+        await this.notifyRoomUserLeft(roomId, userId);
         res.json({message: "all good", roomId: roomId});
     }
 
